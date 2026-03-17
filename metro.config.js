@@ -1,5 +1,9 @@
 const { getDefaultConfig } = require("expo/metro-config");
-const { withNativeWind } = require("nativewind/metro");
+
+// We point directly to the file to bypass resolution issues
+const {
+  withNativeWind,
+} = require("./node_modules/nativewind/dist/metro/index");
 
 const config = getDefaultConfig(__dirname);
 
