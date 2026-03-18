@@ -10,7 +10,6 @@ import {
 import { useForm, Controller } from "react-hook-form";
 import { Ruler } from "lucide-react-native";
 import { useOrderStore } from "../store/useOrderStore";
-import { useRouter } from "expo-router";
 
 const KU_GOLD = "#C5A059";
 
@@ -23,12 +22,31 @@ const TYPE_PHOTOS: Record<string, any> = {
   VIP: require("../assets/images/vip.jpg"),
 };
 
+const ORNAMENT_TYPES = [
+  "Тип 1",
+  "Тип 2",
+  "Тип 3",
+  "Тип 4",
+  "Тип 5",
+  "Тип 6",
+  "Тип 7",
+  "Тип 8",
+  "Тип 9",
+  "Тип 10",
+];
+
 // Фото типов орнамента (Экран 2)
 const ORNAMENT_PHOTOS: Record<string, any> = {
-  "Тип 1": require("../assets/images/ornament1.jpg"),
-  "Тип 2": require("../assets/images/ornament2.jpg"),
-  "Тип 3": require("../assets/images/ornament3.jpg"),
-  Авторский: require("../assets/images/custom.jpg"),
+  "Тип 1": require("../assets/images/ornament1.png"),
+  "Тип 2": require("../assets/images/ornament2.png"),
+  "Тип 3": require("../assets/images/ornament3.png"),
+  "Тип 4": require("../assets/images/ornament4.png"),
+  "Тип 5": require("../assets/images/ornament5.png"),
+  "Тип 6": require("../assets/images/ornament6.png"),
+  "Тип 7": require("../assets/images/ornament7.png"),
+  "Тип 8": require("../assets/images/ornament8.png"),
+  "Тип 9": require("../assets/images/ornament9.png"),
+  "Тип 10": require("../assets/images/ornament10.png"),
 };
 
 // --- Вспомогательные компоненты ---
@@ -96,6 +114,62 @@ const Checkbox = ({ control, name, text }: any) => (
         </View>
         <Text className="text-sm text-gray-600">{text}</Text>
       </TouchableOpacity>
+    )}
+  />
+);
+
+const OrnamentCarousel = ({ control, name }: any) => (
+  <Controller
+    control={control}
+    name={name}
+    render={({ field: { onChange, value } }) => (
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="flex-row py-2"
+        contentContainerStyle={{ paddingHorizontal: 20 }} // Чтобы первая карточка не прилипала к краю
+      >
+        {ORNAMENT_TYPES.map((type) => {
+          const isSelected = value === type;
+          return (
+            <TouchableOpacity
+              key={type}
+              onPress={() => onChange(type)}
+              activeOpacity={0.8}
+              className="mr-4 items-center w-24" // Фиксированная ширина для выравнивания текста
+            >
+              <View
+                className={`w-24 h-24 rounded-3xl overflow-hidden border-2 mb-2 justify-center items-center ${
+                  isSelected
+                    ? "border-[#C5A059] bg-[#C5A059]/5"
+                    : "border-gray-100 bg-gray-50"
+                }`}
+              >
+                <Image
+                  source={ORNAMENT_PHOTOS[type]}
+                  style={{ width: "80%", height: "80%" }} // Оставляем небольшой отступ внутри
+                  resizeMode="contain" // Центрирует и вписывает без обрезки
+                />
+
+                {isSelected && (
+                  <View className="absolute top-2 right-2 bg-[#C5A059] rounded-full w-5 h-5 items-center justify-center shadow-sm">
+                    <Text className="text-white text-[10px]">✓</Text>
+                  </View>
+                )}
+              </View>
+
+              <Text
+                numberOfLines={1} // Чтобы длинный текст не ломал верстку
+                className={`text-[11px] text-center w-full ${
+                  isSelected ? "text-[#C5A059] font-bold" : "text-gray-400"
+                }`}
+              >
+                {type}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
     )}
   />
 );
@@ -288,32 +362,8 @@ export default function OrderForm() {
 
             <Text className="font-semibold mb-3 mt-2">Тип орнамента</Text>
 
-            {/* Фиксируем высоту и выравнивание, чтобы кнопки не дергались */}
-            <View
-              className="flex-row justify-between items-start mb-6"
-              style={{ minHeight: 160 }}
-            >
-              {/* Левая часть: Кнопки (строго 48%) */}
-              <View className="w-[48%]">
-                <ChipSelector
-                  control={control}
-                  name="ornamentType"
-                  options={["Тип 1", "Тип 2", "Тип 3", "Авторский"]}
-                />
-              </View>
-
-              {/* Правая часть: Картинка (строго 48% и фиксированная высота) */}
-              <View
-                className="w-[48%] rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden"
-                style={{ height: 160 }}
-              >
-                <Image
-                  key={ornamentType} // key заставит Image корректно обновиться при смене типа
-                  source={ORNAMENT_PHOTOS[ornamentType]}
-                  style={{ width: "100%", height: "100%" }}
-                  resizeMode="contain"
-                />
-              </View>
+            <View className="mb-6">
+              <OrnamentCarousel control={control} name="ornamentType" />
             </View>
 
             <Text className="font-semibold mb-3">Расположение вышивки</Text>
