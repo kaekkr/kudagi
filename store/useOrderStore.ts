@@ -16,19 +16,38 @@ export interface Order {
   status: OrderStatus;
   totalPrice: number;
   createdAt: string;
+  // ДОБАВЛЯЕМ: Время последнего изменения статуса
+  statusUpdatedAt?: string;
 }
 
 interface OrderState {
   orders: Order[];
   addOrder: (order: Order) => void;
-  updateOrderStatus: (id: string, status: OrderStatus) => void; // <--- Add this
+  updateOrderStatus: (id: string, status: OrderStatus) => void;
 }
 
 export const useOrderStore = create<OrderState>((set) => ({
   orders: [],
-  addOrder: (order) => set((state) => ({ orders: [order, ...state.orders] })),
+  addOrder: (order) =>
+    set((state) => ({
+      orders: [
+        {
+          ...order,
+          statusUpdatedAt: new Date().toLocaleString("ru-RU"), // Ставим время при создании
+        },
+        ...state.orders,
+      ],
+    })),
   updateOrderStatus: (id, status) =>
     set((state) => ({
-      orders: state.orders.map((o) => (o.id === id ? { ...o, status } : o)),
+      orders: state.orders.map((o) =>
+        o.id === id
+          ? {
+              ...o,
+              status,
+              statusUpdatedAt: new Date().toLocaleString("ru-RU"), // Обновляем время при смене статуса
+            }
+          : o,
+      ),
     })),
 }));

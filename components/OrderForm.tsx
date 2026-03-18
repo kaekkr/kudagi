@@ -150,13 +150,23 @@ export default function OrderForm() {
   };
 
   const handleCompletePayment = () => {
-    // Сохраняем заказ в стор
-    addOrder({
-      ...finalData,
-      status: "Принято",
-      date: new Date().toLocaleDateString(),
-    });
-    setIsPaid(true); // Показываем экран успеха
+    // 1. Генерируем ID и готовим данные для стора
+    const newOrder = {
+      id: Math.random().toString(36).substring(2, 11), // Уникальный ID, чтобы .slice() не падал
+      clientName: finalData.clientName || "Неизвестный клиент",
+      phone: finalData.phone || "-",
+      orderType: `${finalData.orderType} (${finalData.ornamentType})`,
+      status: "Принято", // Начальный статус из вашего списка STATUSES
+      totalPrice: 150000, // Или ваша логика расчета
+      createdAt: new Date().toLocaleString("ru-RU"),
+      statusUpdatedAt: new Date().toLocaleString("ru-RU"),
+    };
+
+    // 2. Сохраняем в Zustand
+    addOrder(newOrder);
+
+    // 3. Показываем экран успеха
+    setIsPaid(true);
   };
 
   if (isPaid) {
