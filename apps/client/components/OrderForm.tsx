@@ -262,7 +262,7 @@ export default function OrderForm() {
       `Подтверждаю заказ. Все параметры указаны верно. С условиями ознакомлен(а) и согласен(на).`
     );
     // Opens WhatsApp with pre-filled message to KuDAGI manager number
-    Linking.openURL(`https://wa.me/77071234567?text=${msg}`);
+    Linking.openURL(`https://wa.me/77072847407?text=${msg}`);
   };
 
   if (isPaid) {
@@ -500,7 +500,7 @@ const PaymentView = ({ data, onComplete, onWhatsApp }: any) => {
             Переведите <Text className="font-bold">75 000 ₸</Text> на Kaspi:
           </Text>
           <View className="bg-gray-100 p-4 rounded-2xl mb-4 w-full">
-            <Text className="text-lg font-bold text-center">+7 (707) 123-45-67</Text>
+            <Text className="text-lg font-bold text-center">+7 (707) 284-74-07</Text>
             <Text className="text-xs text-gray-400 text-center">Получатель: Мадина К.</Text>
           </View>
           <Text className="text-sm text-orange-600 text-center mb-4">
