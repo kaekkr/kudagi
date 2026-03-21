@@ -16,13 +16,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <PlusCircle color={color} size={24} />,
         }}
       />
-      <Tabs.Screen
-        name="order_dashboard"
-        options={{
-          title: "Статусы",
-          tabBarIcon: ({ color }) => <ListChecks color={color} size={24} />,
-        }}
-      />
     </Tabs>
   );
 }
