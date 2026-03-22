@@ -13,11 +13,21 @@ export interface KuDagiOrder {
   whatsApp?: string;
   city?: string;
   address?: string;
-  orderType: string;        // "Стандартный", "Парный", etc.
-  garmentModel?: string;    // "Платье", "Жилет", "Чапан", etc.
+  orderType: string;
+  garmentModel?: string;
+  quantity?: number;
+  fabricColor?: string;
+  fabricType?: string;
   ornamentType: string;
   ornamentPosition: string;
   embroideryColor: string;
+  contactPerson?: string;
+  occasion?: string;
+  desiredDate?: string;
+  deliveryMethod?: string;
+  comment?: string;
+  referencePhotoUrl?: string;
+  consentedToData?: boolean;
   measurements: {
     height: number;
     chest: number;

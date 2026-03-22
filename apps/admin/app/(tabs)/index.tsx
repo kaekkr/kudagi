@@ -305,9 +305,6 @@ export default function AdminOrderDashboard() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      <View style={{ paddingTop: 56, paddingHorizontal: 16, paddingBottom: 8, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#F3F4F6" }}>
-        <Text style={{ fontSize: 24, fontWeight: "700", color: "#111827" }}>Заказы</Text>
-      </View>
       <FilterBar active={filter} onChange={setFilter} />
 
       {loading ? (
