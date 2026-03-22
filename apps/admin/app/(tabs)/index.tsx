@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  Image,
 } from "react-native";
 import { useOrderStore, KuDagiOrder, OrderStatus } from "@kudagi/core";
 
@@ -150,6 +151,12 @@ const OrderDetailModal = ({
             <Row label="Орнамент" value={order.ornamentType} />
             <Row label="Расположение" value={order.ornamentPosition} />
             <Row label="Цвет ниток" value={order.embroideryColor} />
+            <Row label="Цвет ткани" value={order.fabricColor} />
+            <Row label="Тип ткани" value={order.fabricType} />
+            <Row label="Количество" value={order.quantity ? `${order.quantity} шт.` : "—"} />
+            <Row label="Повод" value={order.occasion} />
+            <Row label="Нужен к" value={order.desiredDate} />
+            <Row label="Доставка" value={order.deliveryMethod} />
           </Card>
 
           {/* Measurements */}
@@ -160,6 +167,32 @@ const OrderDetailModal = ({
             <Row label="Талия" value={order.measurements?.waist || "—"} />
             <Row label="Бёдра" value={order.measurements?.hips || "—"} />
           </Card>
+
+          {/* Comment */}
+          {order.comment ? (
+            <>
+              <SectionTitle>Комментарий клиента</SectionTitle>
+              <Card>
+                <View style={{ paddingVertical: 12 }}>
+                  <Text style={{ color: "#374151", fontSize: 14, lineHeight: 20 }}>{order.comment}</Text>
+                </View>
+              </Card>
+            </>
+          ) : null}
+
+          {/* Reference photo */}
+          {order.referencePhotoUrl ? (
+            <>
+              <SectionTitle>Фото модели (образец клиента)</SectionTitle>
+              <Card>
+                <Image
+                  source={{ uri: order.referencePhotoUrl }}
+                  style={{ width: "100%", height: 220, borderRadius: 12 }}
+                  resizeMode="cover"
+                />
+              </Card>
+            </>
+          ) : null}
 
           {/* Payment */}
           <SectionTitle>Оплата</SectionTitle>
@@ -305,6 +338,9 @@ export default function AdminOrderDashboard() {
 
   return (
     <View className="flex-1 bg-gray-50">
+      <View style={{ paddingTop: 56, paddingHorizontal: 16, paddingBottom: 8, backgroundColor: "#fff", borderBottomWidth: 1, borderBottomColor: "#F3F4F6" }}>
+        <Text style={{ fontSize: 24, fontWeight: "700", color: "#111827" }}>Заказы</Text>
+      </View>
       <FilterBar active={filter} onChange={setFilter} />
 
       {loading ? (

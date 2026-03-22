@@ -8,6 +8,7 @@ import {
   Image,
   Linking,
   Platform,
+  ActivityIndicator
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
 import { Ruler, Camera } from "lucide-react-native";
@@ -17,6 +18,26 @@ import { useOrderStore } from "@kudagi/core";
 const SUPABASE_URL = "https://klvotqhinoapghxinrmy.supabase.co";
 const SUPABASE_KEY = "sb_publishable_OJn9yxGI168WN4T5jb7nSQ_G-GhJHFD";
 const BASE_HEADERS = { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` };
+
+async function uploadReferencePhoto(file: File): Promise<string> {
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const fileName = `ref-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${ext}`;
+  const res = await fetch(
+    `${SUPABASE_URL}/storage/v1/object/reference-photos/${fileName}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": file.type,
+        "x-upsert": "true",
+      },
+      body: file,
+    }
+  );
+  if (!res.ok) throw new Error(await res.text());
+  return `${SUPABASE_URL}/storage/v1/object/public/reference-photos/${fileName}`;
+}
 
 async function fetchRemoteOrnaments(): Promise<{ name: string; imageUrl: string }[]> {
   try {
@@ -294,17 +315,25 @@ export default function OrderForm() {
     setShowPayment(false);
   };
 
+  const [photoUploading, setPhotoUploading] = useState(false);
+
   const pickPhoto = async () => {
     if (Platform.OS === "web") {
-      // Web: use input file picker
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*";
-      input.onchange = (e: any) => {
-        const file = e.target.files[0];
-        if (file) {
-          const url = URL.createObjectURL(file);
+      input.onchange = async (e: any) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setPhotoUploading(true);
+        try {
+          const url = await uploadReferencePhoto(file);
           setReferencePhoto(url);
+        } catch {
+          // fallback to blob if upload fails
+          setReferencePhoto(URL.createObjectURL(file));
+        } finally {
+          setPhotoUploading(false);
         }
       };
       input.click();
@@ -501,9 +530,15 @@ export default function OrderForm() {
             <SectionLabel>Фото модели изделия (образец)</SectionLabel>
             <Pressable
               onPress={pickPhoto}
+              disabled={photoUploading}
               className="border-2 border-dashed border-gray-200 rounded-2xl p-5 items-center mb-4"
             >
-              {referencePhoto ? (
+              {photoUploading ? (
+                <View className="items-center py-4">
+                  <ActivityIndicator color="#C5A059" />
+                  <Text className="text-gray-400 text-sm mt-2">Загрузка фото...</Text>
+                </View>
+              ) : referencePhoto ? (
                 <Image
                   source={{ uri: referencePhoto }}
                   style={{ width: "100%", height: 180, borderRadius: 12 }}
