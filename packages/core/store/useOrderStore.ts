@@ -101,6 +101,7 @@ interface OrderState {
   fetchOrders: () => Promise<void>;
   addOrder: (order: KuDagiOrder) => Promise<void>;
   updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
+  updateDepositPaid: (id: string, depositPaid: boolean) => void;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -132,6 +133,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         error: e.message,
       }));
     }
+  },
+
+  updateDepositPaid: (id: string, depositPaid: boolean) => {
+    set((state) => ({
+      orders: state.orders.map((o) =>
+        o.id === id ? { ...o, depositPaid } : o
+      ),
+    }));
   },
 
   updateOrderStatus: async (id: string, status: OrderStatus) => {

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  Alert,
 } from "react-native";
 import { useOrderStore, KuDagiOrder, OrderStatus } from "@kudagi/core";
 
@@ -69,7 +70,18 @@ const OrderCard = ({
           {order.garmentModel ?? order.orderType} · {order.phone}
         </Text>
       </View>
-      <StatusBadge status={order.status} />
+      <View style={{ alignItems: "flex-end" }}>
+        <StatusBadge status={order.status} />
+        <View style={{
+          flexDirection: "row", alignItems: "center",
+          backgroundColor: order.depositPaid ? "#DCFCE7" : "#FEF2F2",
+          paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, marginTop: 4,
+        }}>
+          <Text style={{ fontSize: 10, fontWeight: "600", color: order.depositPaid ? "#16A34A" : "#EF4444" }}>
+            {order.depositPaid ? "✅ Предоплата" : "⏳ Ожидает"}
+          </Text>
+        </View>
+      </View>
     </View>
 
     {/* Mini progress bar */}
@@ -102,6 +114,68 @@ const Row = ({ label, value }: { label: string; value?: string | number }) => (
     </Text>
   </View>
 );
+
+// ── Deposit toggle ───────────────────────────────────────────────────────────
+const DepositToggle = ({ order }: { order: KuDagiOrder }) => {
+  const [confirmed, setConfirmed] = useState(order.depositPaid);
+  const [saving, setSaving] = useState(false);
+  const updateDeposit = useOrderStore((s) => s.updateDepositPaid);
+
+  const toggle = async () => {
+    const next = !confirmed;
+    setSaving(true);
+    try {
+      await fetch(
+        `https://klvotqhinoapghxinrmy.supabase.co/rest/v1/orders?id=eq.${order.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: "sb_publishable_OJn9yxGI168WN4T5jb7nSQ_G-GhJHFD",
+            Authorization: "Bearer sb_publishable_OJn9yxGI168WN4T5jb7nSQ_G-GhJHFD",
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify({ deposit_paid: next }),
+        }
+      );
+      setConfirmed(next);
+      updateDeposit(order.id, next);
+    } catch (e: any) {
+      Alert.alert("Ошибка", e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: "#F9FAFB" }}>
+      <Text style={{ color: "#9CA3AF", fontSize: 14 }}>Предоплата подтверждена</Text>
+      <Pressable
+        onPress={toggle}
+        disabled={saving}
+        style={{
+          flexDirection: "row", alignItems: "center",
+          backgroundColor: confirmed ? "#DCFCE7" : "#FEF2F2",
+          paddingHorizontal: 12, paddingVertical: 6,
+          borderRadius: 20,
+        }}
+      >
+        {saving ? (
+          <ActivityIndicator size="small" color={confirmed ? "#16A34A" : "#EF4444"} />
+        ) : (
+          <>
+            <Text style={{ fontSize: 13, fontWeight: "700", color: confirmed ? "#16A34A" : "#EF4444" }}>
+              {confirmed ? "✅ Подтверждена" : "❌ Не подтверждена"}
+            </Text>
+            <Text style={{ fontSize: 11, color: confirmed ? "#16A34A" : "#EF4444", marginLeft: 6 }}>
+              {confirmed ? "Отменить" : "Подтвердить"}
+            </Text>
+          </>
+        )}
+      </Pressable>
+    </View>
+  );
+};
 
 // ── Order detail modal ───────────────────────────────────────────────────────
 const OrderDetailModal = ({
@@ -210,7 +284,7 @@ const OrderDetailModal = ({
                   : "—"
               }
             />
-            <Row label="Предоплата внесена" value={order.depositPaid ? "✅ Да" : "❌ Нет"} />
+            <DepositToggle order={order} />
           </Card>
 
           {/* Status editor */}
@@ -275,10 +349,10 @@ const FilterBar = ({
   active,
   onChange,
 }: {
-  active: OrderStatus | "Все";
-  onChange: (f: OrderStatus | "Все") => void;
+  active: OrderStatus | "Все" | "Оплачено" | "Не оплачено";
+  onChange: (f: OrderStatus | "Все" | "Оплачено" | "Не оплачено") => void;
 }) => {
-  const filters: (OrderStatus | "Все")[] = ["Все", ...STATUS_ORDER];
+  const filters: (OrderStatus | "Все" | "Оплачено" | "Не оплачено")[] = ["Все", ...STATUS_ORDER, "Оплачено", "Не оплачено"];
   return (
     <ScrollView
       horizontal
@@ -321,7 +395,7 @@ export default function AdminOrderDashboard() {
   const orders = useOrderStore((s) => s.orders);
   const fetchOrders = useOrderStore((s) => s.fetchOrders);
   const loading = useOrderStore((s) => s.loading);
-  const [filter, setFilter] = useState<OrderStatus | "Все">("Все");
+  const [filter, setFilter] = useState<OrderStatus | "Все" | "Оплачено" | "Не оплачено">("Все");
   const [selected, setSelected] = useState<KuDagiOrder | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -333,8 +407,12 @@ export default function AdminOrderDashboard() {
 
   useEffect(() => { fetchOrders(); }, []);
 
-  const filtered =
-    filter === "Все" ? orders : orders.filter((o) => o.status === filter);
+  const filtered = orders.filter((o) => {
+    if (filter === "Все") return true;
+    if (filter === "Оплачено") return o.depositPaid;
+    if (filter === "Не оплачено") return !o.depositPaid;
+    return o.status === filter;
+  });
 
   return (
     <View className="flex-1 bg-gray-50">
