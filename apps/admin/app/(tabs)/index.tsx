@@ -15,15 +15,19 @@ import { useOrderStore, KuDagiOrder, OrderStatus } from "@kudagi/core";
 
 const STATUS_ORDER: OrderStatus[] = [
   "Принято", "Крой", "Вышивка", "Пошив", "Готово", "Отправка",
+  "Предоплата оплачена", "Оплачено полностью", "Выдано",
 ];
 
 const STATUS_STYLE: Record<OrderStatus, { bg: string; text: string; dot: string }> = {
-  Принято:  { bg: "bg-blue-50",   text: "text-blue-600",   dot: "bg-blue-400" },
-  Крой:     { bg: "bg-yellow-50", text: "text-yellow-600", dot: "bg-yellow-400" },
-  Вышивка:  { bg: "bg-purple-50", text: "text-purple-600", dot: "bg-purple-400" },
-  Пошив:    { bg: "bg-orange-50", text: "text-orange-600", dot: "bg-orange-400" },
-  Готово:   { bg: "bg-green-50",  text: "text-green-600",  dot: "bg-green-500" },
-  Отправка: { bg: "bg-gray-100",  text: "text-gray-600",   dot: "bg-gray-400" },
+  Принято:              { bg: "bg-blue-50",   text: "text-blue-600",   dot: "bg-blue-400" },
+  Крой:                 { bg: "bg-yellow-50", text: "text-yellow-600", dot: "bg-yellow-400" },
+  Вышивка:              { bg: "bg-purple-50", text: "text-purple-600", dot: "bg-purple-400" },
+  Пошив:                { bg: "bg-orange-50", text: "text-orange-600", dot: "bg-orange-400" },
+  Готово:               { bg: "bg-green-50",  text: "text-green-600",  dot: "bg-green-500" },
+  Отправка:             { bg: "bg-gray-100",  text: "text-gray-600",   dot: "bg-gray-400" },
+  "Предоплата оплачена":  { bg: "bg-teal-50",  text: "text-teal-600",   dot: "bg-teal-400" },
+  "Оплачено полностью":   { bg: "bg-emerald-50", text: "text-emerald-600", dot: "bg-emerald-500" },
+  Выдано:               { bg: "bg-indigo-50", text: "text-indigo-600", dot: "bg-indigo-400" },
 };
 
 function formatDate(iso: string) {

@@ -4,7 +4,10 @@ export type OrderStatus =
   | "Вышивка"
   | "Пошив"
   | "Готово"
-  | "Отправка";
+  | "Отправка"
+  | "Предоплата оплачена"
+  | "Оплачено полностью"
+  | "Выдано";
 
 export interface KuDagiOrder {
   id: string;
@@ -29,10 +32,20 @@ export interface KuDagiOrder {
   referencePhotoUrl?: string;
   consentedToData?: boolean;
   measurements: {
-    height: number;
-    chest: number;
-    waist: number;
-    hips: number;
+    chest: number;       // Og - обхват груди
+    waist: number;       // Ot - обхват талии
+    hips: number;        // Ob - обхват бедер
+    chestHeight: number; // Vg - высота груди
+    backWidth: number;   // Shsp - ширина спинки
+    frontLength: number; // Dtp - длина полочки
+    backLength: number;  // Dts - длина спинки
+    shoulderLength: number; // Dplecha - длина плеча
+    skirtLength: number; // Dyu - длина юбки
+    garmentLength: number; // Dizd - длина изделия
+    armCircumference: number; // Oruk - обхват руки
+    sleeveLength: number;    // D ruk - длина рукавов
+    neckCircumference: number; // обхват шеи
+    height: number;      // рост
   };
   totalPrice: number;
   depositPaid: boolean;
