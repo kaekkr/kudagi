@@ -1,4 +1,6 @@
-export const mapFormToOrder = (data: any, referencePhoto: string | null) => {
+import { KuDagiOrder } from "@kudagi/core";
+
+export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagiOrder => {
   return {
     id: Date.now().toString(36) + Math.random().toString(36).substring(2, 7),
     clientName: data.clientName?.trim() || "Клиент",
@@ -38,6 +40,8 @@ export const mapFormToOrder = (data: any, referencePhoto: string | null) => {
       neckCircumference: parseFloat(data.neckCircumference) || 0,
     },
     totalPrice: 0,
+    depositPaid: false,
+    paymentMethod: data.paymentMethod,
     status: "Принято" as const,
     createdAt: new Date().toISOString(),
     statusUpdatedAt: new Date().toISOString(),

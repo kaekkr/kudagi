@@ -1,8 +1,4 @@
-import {
-  View,
-  Text,
-  Pressable,
-} from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Controller } from "react-hook-form";
 
 export const Checkbox = ({ control, name, text, rules }: any) => (
@@ -12,17 +8,31 @@ export const Checkbox = ({ control, name, text, rules }: any) => (
     rules={rules}
     render={({ field: { onChange, value }, fieldState: { error } }) => (
       <View className="mb-4">
-        <Pressable onPress={() => onChange(!value)} className="flex-row items-start">
+        <Pressable
+          onPress={() => onChange(!value)}
+          className="flex-row items-start"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <View
-            className={`w-5 h-5 rounded border mr-3 mt-0.5 items-center justify-center flex-shrink-0 ${
-              error ? "border-red-400" : value ? "bg-[#C5A059] border-[#C5A059]" : "border-gray-200"
-            }`}
+            style={{
+              width: 20, height: 20, borderRadius: 4,
+              borderWidth: 1.5,
+              borderColor: error ? "#F87171" : value ? "#C5A059" : "#D1D5DB",
+              backgroundColor: value ? "#C5A059" : "transparent",
+              marginRight: 10, marginTop: 2,
+              alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}
           >
-            {value && <Text className="text-white text-[10px]">✓</Text>}
+            {value && <Text style={{ color: "white", fontSize: 11, fontWeight: "700" }}>✓</Text>}
           </View>
           <Text className="text-sm text-gray-600 flex-1">{text}</Text>
         </Pressable>
-        {error && <Text className="text-red-400 text-xs mt-1 ml-8">{error.message}</Text>}
+        {error && (
+          <Text style={{ color: "#F87171", fontSize: 11, marginTop: 4, marginLeft: 30 }}>
+            {error.message}
+          </Text>
+        )}
       </View>
     )}
   />

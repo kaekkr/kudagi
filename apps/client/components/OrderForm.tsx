@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, ActivityIndicator } from "react-native";
+import { View, ScrollView, ActivityIndicator, Linking } from "react-native";
 import { useOrderStore } from "@kudagi/core";
 import { useRemoteAssets } from "@/hooks/useRemoteAccess";
 import { useOrderFormLogic } from "@/hooks/useOrderFormLogic";
@@ -27,14 +27,10 @@ export default function OrderForm() {
   const addOrder = useOrderStore((state) => state.addOrder);
 
   const {
-    step, setStep, control, handleSubmit, watch,
+    step, setStep, control, handleSubmit,
     handleNext, reset, pickPhoto,
     photoUploading, referencePhoto, setReferencePhoto
   } = useOrderFormLogic(uploadReferencePhoto);
-
-  // Form State Watchers
-  const orderType = watch("orderType");
-  const method = watch("measurementMethod");
 
   const onFinalSubmit = (data: any) => {
     setFinalData(data);
@@ -47,6 +43,29 @@ export default function OrderForm() {
     setIsPaid(true);
   };
 
+  const handleWhatsAppConfirm = () => {
+    if (!finalData) return;
+    const msg = encodeURIComponent(
+      `Пожалуйста внимательно проверьте параметры вашего заказа.\n\n` +
+      `Клиент: ${finalData.clientName}\n` +
+      `Телефон: ${finalData.phone}\n` +
+      `Модель: ${finalData.garmentModel} (${finalData.quantity} шт.)\n` +
+      `Вид заказа: ${finalData.orderType}\n` +
+      `Цвет ткани: ${finalData.fabricColor || "—"}\n` +
+      `Тип ткани: ${finalData.fabricType || "—"}\n` +
+      `Орнамент: ${finalData.ornamentType}, расположение: ${finalData.ornamentPosition}\n` +
+      `Цвет ниток: ${finalData.embroideryColor || "—"}\n` +
+      `Повод: ${finalData.occasion}\n` +
+      `Нужен к: ${finalData.desiredDate || "—"}\n` +
+      `Доставка: ${finalData.deliveryMethod}\n` +
+      `Оплата: ${finalData.paymentMethod}\n` +
+      (finalData.comment ? `Комментарий: ${finalData.comment}\n` : "") +
+      `\nЕсли всё указано верно, напишите:\n` +
+      `Подтверждаю заказ. Все параметры указаны верно. С условиями ознакомлен(а) и согласен(на).`
+    );
+    Linking.openURL(`https://wa.me/77072847407?text=${msg}`);
+  };
+
   if (isLoading) return <View className="flex-1 justify-center"><ActivityIndicator color="#C5A059" /></View>;
   if (isPaid) return <SuccessScreen onReset={() => { reset(); setStep(1); setIsPaid(false); setShowPayment(false); }} />;
 
@@ -56,6 +75,7 @@ export default function OrderForm() {
         data={finalData}
         onComplete={handleCompletePayment}
         onBack={() => setShowPayment(false)}
+        onWhatsApp={handleWhatsAppConfirm}
       />
     );
   }
@@ -66,18 +86,19 @@ export default function OrderForm() {
 
       <View className="px-6 pt-8">
         {step === 1 && (
-          <StepOne t={t} control={control} orderType={orderType} getTypePhoto={getTypePhoto} />
+          <StepOne t={t} control={control} lang={lang} getTypePhoto={getTypePhoto} />
         )}
         {step === 2 && (
           <StepTwo
             t={t} control={control}
+            lang={lang}
             ornamentList={ornamentList} getOrnamentImage={getOrnamentImage}
             photoUploading={photoUploading} referencePhoto={referencePhoto}
             pickPhoto={pickPhoto} setReferencePhoto={setReferencePhoto}
           />
         )}
         {step === 3 && (
-          <StepThree t={t} control={control} lang={lang} method={method} />
+          <StepThree t={t} control={control} lang={lang} />
         )}
         {step === 4 && (
           <StepFour t={t} control={control} />

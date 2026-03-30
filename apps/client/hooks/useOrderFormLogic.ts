@@ -17,10 +17,45 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
 
   const { control, handleSubmit, watch, reset, trigger } = useForm({
     defaultValues: {
-      orderType: "Стандартный", garmentModel: "Платье", quantity: "1",
-      ornamentType: "Тип 1", ornamentPosition: "Ворот",
-      deliveryMethod: "Самовывоз", measurementMethod: "самостоятельно",
-      paymentMethod: "Kaspi Перевод", // ... add other defaults
+      clientName: "",
+      phone: "",
+      whatsApp: "",
+      city: "",
+      address: "",
+      contactPerson: "",
+      orderType: "Стандартный",
+      garmentModel: "Платье",
+      quantity: "1",
+      fabricColor: "",
+      fabricType: "",
+      ornamentType: "Тип 1",
+      ornamentPosition: "Ворот",
+      embroideryColor: "",
+      colorConfirmed: false,
+      occasion: "Праздник",
+      desiredDate: "",
+      deadlineConfirmed: false,
+      deliveryMethod: "Самовывоз",
+      measurementMethod: "самостоятельно",
+      chest: "",
+      waist: "",
+      hips: "",
+      height: "",
+      chestHeight: "",
+      backWidth: "",
+      frontLength: "",
+      backLength: "",
+      shoulderLength: "",
+      skirtLength: "",
+      garmentLength: "",
+      armCircumference: "",
+      sleeveLength: "",
+      neckCircumference: "",
+      comment: "",
+      confirmData: false,
+      paymentMethod: "Kaspi Перевод",
+      agreedToTerms: false,
+      consentedToData: false,
     },
   });
 
@@ -41,7 +76,11 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
         try {
           const url = await uploadReferencePhoto(file);
           setReferencePhoto(url);
-        } finally { setPhotoUploading(false); }
+        } catch {
+          setReferencePhoto(URL.createObjectURL(file));
+        } finally {
+          setPhotoUploading(false);
+        }
       };
       input.click();
     } else {
@@ -53,9 +92,16 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
     }
   };
 
+  const resetAll = () => {
+    reset();
+    setStep(1);
+    setReferencePhoto(null);
+    setPhotoUploading(false);
+  };
+
   return {
     step, setStep, control, handleSubmit, watch,
-    handleNext, reset, pickPhoto,
-    photoUploading, referencePhoto, setReferencePhoto
+    handleNext, reset: resetAll, pickPhoto,
+    photoUploading, referencePhoto, setReferencePhoto,
   };
 };

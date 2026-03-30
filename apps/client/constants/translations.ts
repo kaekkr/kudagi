@@ -1,5 +1,40 @@
 export type Lang = "kaz" | "rus";
 
+export const ORDER_TYPES_T: Record<Lang, string[]> = {
+  kaz: ["Стандартты", "Жұптық", "Отбасылық", "Шұғыл", "VIP"],
+  rus: ["Стандартный", "Парный", "Семейный", "Срочный", "VIP"],
+};
+
+// Internal values stay in Russian (stored in DB), display labels translated
+export const ORDER_TYPE_VALUES = ["Стандартный", "Парный", "Семейный", "Срочный", "VIP"];
+
+export const PAYMENT_METHODS_T: Record<Lang, string[]> = {
+  kaz: ["Kaspi Аударым", "Kaspi QR", "Kaspi Red", "Банк аударымы", "Қолма-қол"],
+  rus: ["Kaspi Перевод", "Kaspi QR", "Kaspi Red", "Банковский перевод", "Наличные"],
+};
+
+export const PAYMENT_METHOD_VALUES = ["Kaspi Перевод", "Kaspi QR", "Kaspi Red", "Банковский перевод", "Наличные"];
+
+export const GARMENT_MODELS_T: Record<Lang, string[]> = {
+  kaz: ["Көйлек", "Жилет", "Шапан", "Пальто", "Басқа"],
+  rus: ["Платье", "Жилет", "Чапан", "Пальто", "Другое"],
+};
+
+export const ORNAMENT_POSITIONS_T: Record<Lang, string[]> = {
+  kaz: ["Жаға", "Жең", "Қалта", "Етек", "Басқа"],
+  rus: ["Ворот", "Рукав", "Карман", "Подол", "Другое"],
+};
+
+export const OCCASIONS_T: Record<Lang, string[]> = {
+  kaz: ["Үйлену тойы", "Мереке", "Мерейтой", "Басқа"],
+  rus: ["Свадьба", "Праздник", "Юбилей", "Другое"],
+};
+
+export const DELIVERY_METHODS_T: Record<Lang, string[]> = {
+  kaz: ["Өзі алып кетеді", "Курьер", "Пошта / қалааралық"],
+  rus: ["Самовывоз", "Курьер", "Почта / межгород"],
+};
+
 export const T: Record<Lang, Record<string, string>> = {
   kaz: {
     newOrder: "Жаңа тапсырыс",
@@ -61,6 +96,9 @@ export const T: Record<Lang, Record<string, string>> = {
     checking: "Тексерілуде...",
     changeDetails: "Тапсырыс деректерін өзгерту",
     photoUploading: "Фото жүктелуде...",
+    priceTitle: "Тапсырыс құны",
+    priceSubtitle: "Менеджер анықтайды",
+    priceNote: "Өндірісті іске қосу үшін 50% алдын ала төлем",
     errorRequired: "Міндетті өріс",
     errorPhone: "Дұрыс нөмір енгізіңіз",
     errorQty: "Кемінде 1 бұйым",
@@ -96,10 +134,10 @@ export const T: Record<Lang, Record<string, string>> = {
     embroideryColor: "Цвет ниток вышивки",
     confirmColor: "Цвет изделия подтверждаю",
     referencePhoto: "Фото модели изделия (образец)",
-    tapToAttach: "Фото тіркеу үшін басыңыз",
-    optional: "Міндетті емес",
-    removePhoto: "Фотоны жою",
-    measurements: "Клиент өлшемдері (см)",
+    tapToAttach: "Нажмите, чтобы прикрепить фото",
+    optional: "Необязательно",
+    removePhoto: "Удалить фото",
+    measurements: "Мерки клиента (см)",
     selfMeasure: "Ввожу сам(а)",
     masterMeasure: "Снимет мастер",
     occasion: "Повод",
@@ -117,34 +155,37 @@ export const T: Record<Lang, Record<string, string>> = {
     continue: "Продолжить",
     placeOrder: "Оформить заказ",
     goBack: "Вернуться назад",
-        uploading: "Загрузка...",
-        orderConfirmed: "Заказ принят!",
-        successMsg: "Мадина свяжется с вами в ближайшее время для подтверждения деталей и стоимости.",
-        newOrderBtn: "Создать новый заказ",
-        orderConfirmTitle: "Подтверждение заказа",
-        transferMsg: "Менеджер свяжется с вами и сообщит точную стоимость. После чего переведите предоплату 50%:",
-        recipient: "Получатель: Мадина К.",
-        sendWhatsApp: "Отправить детали в WhatsApp",
-        iTransferred: "Я перевел(а) · Завершить",
-        confirmOrder: "Подтвердить заказ",
-        cashMsg: "Оплата наличными при получении или в ателье.",
-        requisitesMsg: "Менеджер пришлёт реквизиты для перевода после подтверждения заказа.",
-        checkKaspi: "Откройте Kaspi.kz и отсканируйте код",
-        confirmPayment: "Подтвердить оплату",
-        checking: "Проверка...",
-        changeDetails: "Изменить детали заказа",
-        photoUploading: "Загрузка фото...",
-        errorRequired: "Обязательное поле",
-        errorPhone: "Введите корректный номер",
-        errorQty: "Минимум 1 изделие",
-        errorColor: "Укажите цвет ткани",
-        errorThread: "Укажите цвет ниток",
-        errorDate: "Укажите желаемую дату",
-        errorDeadline: "Подтвердите понимание сроков",
-        errorTerms: "Необходимо принять условия",
-        errorConsent: "Необходимо дать согласие",
-        errorConfirmData: "Подтвердите верность данных",
-        errorConfirmColor: "Подтвердите цвет изделия",
-        warningWhatsApp: "⚠️ Скиньте чек в WhatsApp после перевода",
+    uploading: "Загрузка...",
+    orderConfirmed: "Заказ принят!",
+    successMsg: "Мадина свяжется с вами в ближайшее время для подтверждения деталей и стоимости.",
+    newOrderBtn: "Создать новый заказ",
+    orderConfirmTitle: "Подтверждение заказа",
+    transferMsg: "Менеджер свяжется с вами и сообщит точную стоимость. После чего переведите предоплату 50%:",
+    recipient: "Получатель: Мадина К.",
+    sendWhatsApp: "Отправить детали в WhatsApp",
+    iTransferred: "Я перевел(а) · Завершить",
+    confirmOrder: "Подтвердить заказ",
+    cashMsg: "Оплата наличными при получении или в ателье.",
+    requisitesMsg: "Менеджер пришлёт реквизиты для перевода после подтверждения заказа.",
+    checkKaspi: "Откройте Kaspi.kz и отсканируйте код",
+    confirmPayment: "Подтвердить оплату",
+    checking: "Проверка...",
+    changeDetails: "Изменить детали заказа",
+    photoUploading: "Загрузка фото...",
+    priceTitle: "Стоимость заказа",
+    priceSubtitle: "Уточняется менеджером",
+    priceNote: "Предоплата 50% для запуска производства",
+    errorRequired: "Обязательное поле",
+    errorPhone: "Введите корректный номер",
+    errorQty: "Минимум 1 изделие",
+    errorColor: "Укажите цвет ткани",
+    errorThread: "Укажите цвет ниток",
+    errorDate: "Укажите желаемую дату",
+    errorDeadline: "Подтвердите понимание сроков",
+    errorTerms: "Необходимо принять условия",
+    errorConsent: "Необходимо дать согласие",
+    errorConfirmData: "Подтвердите верность данных",
+    errorConfirmColor: "Подтвердите цвет изделия",
+    warningWhatsApp: "⚠️ Скиньте чек в WhatsApp после перевода",
   },
 };

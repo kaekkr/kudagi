@@ -27,10 +27,10 @@ export const StepFour = ({ t, control }: StepFourProps) => {
 
       {/* Pricing Information Card */}
       <View className="bg-gray-50 p-5 rounded-3xl mb-5">
-        <Text className="text-gray-400 text-xs mb-1">Стоимость заказа</Text>
-        <Text className="text-2xl font-bold text-gray-800">Уточняется менеджером</Text>
+        <Text className="text-gray-400 text-xs mb-1">{t.priceTitle}</Text>
+        <Text className="text-2xl font-bold text-gray-800">{t.priceSubtitle}</Text>
         <Text className="text-gray-400 text-xs mt-2">
-          Предоплата 50% для запуска производства
+          {t.priceNote}
         </Text>
       </View>
 

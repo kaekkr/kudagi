@@ -2,18 +2,17 @@ import { View, Text, Pressable, Image } from "react-native";
 import { Controller, Control } from "react-hook-form";
 import { InputField } from "./ui/InputField";
 import { SectionLabel } from "./ui/SectionLabel";
+import { ORDER_TYPES_T } from "@/constants/translations";
 
 interface StepOneProps {
   t: any;
+  lang: any;
   control: Control<any>;
-  orderType: string;
   getTypePhoto: (type: string) => any;
 }
 
-const ORDER_TYPES = ["Стандартный", "Парный", "Семейный", "Срочный", "VIP"];
-
-export const StepOne = ({ t, control, orderType, getTypePhoto }: StepOneProps) => {
-  const isFamilyOrder = orderType === "Семейный";
+export const StepOne = ({ t, lang, control, getTypePhoto }: StepOneProps) => {
+  const currentOrderTypes = lang === "kaz" ? ORDER_TYPES_T.kaz : ORDER_TYPES_T.rus;
 
   return (
     <View>
@@ -59,44 +58,50 @@ export const StepOne = ({ t, control, orderType, getTypePhoto }: StepOneProps) =
       <SectionLabel>{t.orderType}</SectionLabel>
       <View className="flex-row justify-between">
         <View className="w-[45%]">
-          {ORDER_TYPES.map((type) => (
+          {currentOrderTypes.map((type, index) => (
             <Controller
               key={type}
               control={control}
               name="orderType"
-              render={({ field: { onChange, value } }) => (
-                <Pressable
-                  onPress={() => onChange(type)}
-                  className={`mb-2 p-3.5 rounded-xl border ${
-                    value === type ? "border-[#C5A059] bg-[#C5A059]/5" : "border-gray-100"
-                  }`}
-                >
-                  <Text className={`text-center ${value === type ? "text-[#C5A059] font-bold" : "text-gray-400"}`}>
-                    {type}
-                  </Text>
-                </Pressable>
-              )}
+              render={({ field: { onChange, value } }) => {
+                const russianValue = ORDER_TYPES_T.rus[index];
+                const isActive = value === russianValue;
+
+                return (
+                  <Pressable
+                    onPress={() => onChange(russianValue)}
+                    className={`mb-2 p-3.5 rounded-xl border ${
+                      isActive ? "border-[#C5A059] bg-[#C5A059]/5" : "border-gray-100"
+                    }`}
+                  >
+                    <Text className={`text-center ${isActive ? "text-[#C5A059] font-bold" : "text-gray-400"}`}>
+                      {type}
+                    </Text>
+                  </Pressable>
+                );
+              }}
             />
           ))}
         </View>
+        <Controller
+          control={control}
+          name="orderType"
+          render={({ field: { value } }) => {
+            const currentIndex = currentOrderTypes.indexOf(value);
+            const techType = ORDER_TYPES_T.rus[currentIndex] || "Стандартный";
 
-        {/* Dynamic Image Preview */}
-        <View className="w-[50%] rounded-3xl bg-gray-100 overflow-hidden" style={{ height: 240 }}>
-          <Image
-            source={getTypePhoto(orderType)}
-            style={{ width: "100%", height: "100%" }}
-            resizeMode="cover"
-          />
-        </View>
+            return (
+              <View className="w-[50%] rounded-3xl bg-gray-100 overflow-hidden" style={{ height: 240 }}>
+                <Image
+                source={getTypePhoto(techType)}
+                style={{ width: "100%", height: "100%" }}
+                resizeMode="cover"
+                />
+              </View>
+            );
+          }}
+        />
       </View>
-
-      {/* Conditional Field */}
-      {isFamilyOrder && (
-        <View className="mt-4">
-          <SectionLabel>{t.contactPerson}</SectionLabel>
-          <InputField control={control} name="contactPerson" placeholder={t.contactPerson} />
-        </View>
-      )}
     </View>
   );
 };

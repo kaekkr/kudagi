@@ -30,3 +30,10 @@ export const GARMENT_MODELS = ["Платье", "Жилет", "Чапан", "Па
 export const ORNAMENT_POSITIONS = ["Ворот", "Рукав", "Карман", "Подол", "Другое"];
 export const OCCASIONS = ["Свадьба", "Праздник", "Юбилей", "Другое"];
 export const DELIVERY_METHODS = ["Самовывоз", "Курьер", "Почта / межгород"];
+
+export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+export const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY!;
+export const BASE_HEADERS = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+};

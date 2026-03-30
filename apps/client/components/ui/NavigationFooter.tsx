@@ -32,8 +32,7 @@ export const NavigationFooter = ({
           className="mt-4 py-2 self-center active:opacity-60"
         >
           <Text className="text-gray-400 font-medium">
-            {/* Using a hardcoded fallback if translation is missing */}
-            {t.back || "Вернуться назад"}
+            <Text>{t.goBack}</Text>
           </Text>
         </Pressable>
       )}
