@@ -51,6 +51,7 @@ function fromRow(row: any): KuDagiOrder {
     },
     totalPrice: row.total_price ?? 0,
     depositPaid: row.deposit_paid ?? false,
+    fullPaid: row.full_paid ?? false,
     paymentMethod: row.payment_method ?? "",
     status: row.status as OrderStatus,
     createdAt: row.created_at,
@@ -97,6 +98,7 @@ function toRow(order: KuDagiOrder) {
     neck_circumference: order.measurements?.neckCircumference ?? null,
     total_price: order.totalPrice,
     deposit_paid: order.depositPaid,
+    full_paid: order.fullPaid,
     payment_method: order.paymentMethod,
     status: order.status,
     created_at: order.createdAt,
@@ -121,7 +123,7 @@ interface OrderState {
   fetchOrders: () => Promise<void>;
   addOrder: (order: KuDagiOrder) => Promise<void>;
   updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
-  updateDepositPaid: (id: string, depositPaid: boolean) => void;
+  updateOrderPayment: (id: string, updates: { depositPaid?: boolean; fullPaid?: boolean }) => Promise<void>;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -155,13 +157,31 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }
   },
 
-  updateDepositPaid: (id: string, depositPaid: boolean) => {
-    set((state) => ({
-      orders: state.orders.map((o) =>
-        o.id === id ? { ...o, depositPaid } : o
-      ),
-    }));
-  },
+  updateOrderPayment: async (id: string, updates: { depositPaid?: boolean; fullPaid?: boolean }) => {
+      // 1. Сначала обновляем локально (Optimistic UI)
+      set((state) => ({
+        orders: state.orders.map((o) =>
+          o.id === id ? { ...o, ...updates } : o
+        ),
+      }));
+
+      try {
+        // 2. Готовим тело запроса для Supabase (snake_case)
+        const body: any = {};
+        if (updates.depositPaid !== undefined) body.deposit_paid = updates.depositPaid;
+        if (updates.fullPaid !== undefined) body.full_paid = updates.fullPaid;
+
+        await db(`/orders?id=eq.${id}`, {
+          method: "PATCH",
+          headers: { Prefer: "return=minimal" },
+          body: JSON.stringify(body),
+        });
+      } catch (e: any) {
+        console.error("Failed to update payment", e);
+        // Если упало — перекачиваем данные, чтобы вернуть как было
+        get().fetchOrders();
+      }
+    },
 
   updateOrderStatus: async (id: string, status: OrderStatus) => {
     const now = new Date().toISOString();

@@ -87,15 +87,17 @@ export const StepOne = ({ t, lang, control, getTypePhoto }: StepOneProps) => {
           control={control}
           name="orderType"
           render={({ field: { value } }) => {
-            const currentIndex = currentOrderTypes.indexOf(value);
-            const techType = ORDER_TYPES_T.rus[currentIndex] || "Стандартный";
+            const currentIndex = ORDER_TYPES_T.rus.indexOf(value);
+            const techType = currentIndex !== -1
+              ? ORDER_TYPES_T.rus[currentIndex]
+              : "Стандартный";
 
             return (
               <View className="w-[50%] rounded-3xl bg-gray-100 overflow-hidden" style={{ height: 240 }}>
                 <Image
-                source={getTypePhoto(techType)}
-                style={{ width: "100%", height: "100%" }}
-                resizeMode="cover"
+                  source={getTypePhoto(techType)}
+                  style={{ width: "100%", height: "100%" }}
+                  resizeMode="cover"
                 />
               </View>
             );

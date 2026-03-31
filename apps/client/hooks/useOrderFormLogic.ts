@@ -65,30 +65,52 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
   };
 
   const pickPhoto = async () => {
+    let imageUri: string | null = null;
+
     if (Platform.OS === "web") {
       const input = document.createElement("input");
       input.type = "file";
       input.accept = "image/*";
-      input.onchange = async (e: any) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setPhotoUploading(true);
-        try {
-          const url = await uploadReferencePhoto(file);
-          setReferencePhoto(url);
-        } catch {
-          setReferencePhoto(URL.createObjectURL(file));
-        } finally {
-          setPhotoUploading(false);
-        }
-      };
-      input.click();
+
+      const file: File = await new Promise((resolve) => {
+        input.onchange = (e: any) => resolve(e.target.files?.[0]);
+        input.click();
+      });
+
+      if (!file) return;
+
+      setPhotoUploading(true);
+      try {
+        const url = await uploadReferencePhoto(file);
+        setReferencePhoto(url);
+      } catch (e) {
+        alert("Ошибка загрузки в облако");
+      } finally {
+        setPhotoUploading(false);
+      }
+
     } else {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.7,
       });
-      if (!result.canceled) setReferencePhoto(result.assets[0].uri);
+
+      if (!result.canceled) {
+        setPhotoUploading(true);
+        try {
+          const asset = result.assets[0];
+
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+
+          const url = await uploadReferencePhoto(blob);
+          setReferencePhoto(url);
+        } catch (e) {
+          alert("Ошибка загрузки в облако");
+        } finally {
+          setPhotoUploading(false);
+        }
+      }
     }
   };
 

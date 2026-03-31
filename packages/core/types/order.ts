@@ -5,8 +5,6 @@ export type OrderStatus =
   | "Пошив"
   | "Готово"
   | "Отправка"
-  | "Предоплата оплачена"
-  | "Оплачено полностью"
   | "Выдано";
 
 export interface KuDagiOrder {
@@ -49,6 +47,7 @@ export interface KuDagiOrder {
   };
   totalPrice: number;
   depositPaid: boolean;
+  fullPaid: boolean;
   paymentMethod: string;
   status: OrderStatus;
   createdAt: string;
