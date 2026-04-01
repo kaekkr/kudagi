@@ -29,7 +29,8 @@ export default function OrderForm() {
   const {
     step, setStep, control, handleSubmit,
     handleNext, reset, pickPhoto,
-    photoUploading, referencePhoto, setReferencePhoto
+    photoUploading, referencePhoto, setReferencePhoto,
+    hydrated,
   } = useOrderFormLogic(uploadReferencePhoto);
 
   const onFinalSubmit = (data: any) => {
@@ -66,7 +67,9 @@ export default function OrderForm() {
     Linking.openURL(`https://wa.me/77072847407?text=${msg}`);
   };
 
-  if (isLoading) return <View className="flex-1 justify-center"><ActivityIndicator color="#C5A059" /></View>;
+  if (isLoading || !hydrated) {
+    return <View className="flex-1 justify-center"><ActivityIndicator color="#C5A059" /></View>;
+  }
   if (isPaid) return <SuccessScreen onReset={() => { reset(); setStep(1); setIsPaid(false); setShowPayment(false); }} />;
 
   if (showPayment && finalData) {

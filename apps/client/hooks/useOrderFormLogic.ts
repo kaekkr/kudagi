@@ -1,7 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useForm } from "react-hook-form";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const STORAGE_KEY = "kudagi_order_draft";
+
+const DEFAULT_VALUES = {
+  clientName: "",
+  phone: "",
+  whatsApp: "",
+  city: "",
+  address: "",
+  contactPerson: "",
+  orderType: "Стандартный",
+  garmentModel: "Платье",
+  quantity: "1",
+  fabricColor: "",
+  fabricType: "",
+  ornamentType: "Тип 1",
+  ornamentPosition: "Ворот",
+  embroideryColor: "",
+  colorConfirmed: false,
+  occasion: "Праздник",
+  desiredDate: "",
+  deadlineConfirmed: false,
+  deliveryMethod: "Самовывоз",
+  measurementMethod: "самостоятельно",
+  chest: "", waist: "", hips: "", height: "",
+  chestHeight: "", backWidth: "", frontLength: "",
+  backLength: "", shoulderLength: "", skirtLength: "",
+  garmentLength: "", armCircumference: "", sleeveLength: "",
+  neckCircumference: "", comment: "",
+  confirmData: false,
+  paymentMethod: "Kaspi Перевод",
+  agreedToTerms: false,
+  consentedToData: false,
+};
 
 const STEP_FIELDS: Record<number, string[]> = {
   1: ["clientName", "phone", "city"],
@@ -14,50 +49,49 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
   const [step, setStep] = useState(1);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [referencePhoto, setReferencePhoto] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
-  const { control, handleSubmit, watch, reset, trigger } = useForm({
-    defaultValues: {
-      clientName: "",
-      phone: "",
-      whatsApp: "",
-      city: "",
-      address: "",
-      contactPerson: "",
-      orderType: "Стандартный",
-      garmentModel: "Платье",
-      quantity: "1",
-      fabricColor: "",
-      fabricType: "",
-      ornamentType: "Тип 1",
-      ornamentPosition: "Ворот",
-      embroideryColor: "",
-      colorConfirmed: false,
-      occasion: "Праздник",
-      desiredDate: "",
-      deadlineConfirmed: false,
-      deliveryMethod: "Самовывоз",
-      measurementMethod: "самостоятельно",
-      chest: "",
-      waist: "",
-      hips: "",
-      height: "",
-      chestHeight: "",
-      backWidth: "",
-      frontLength: "",
-      backLength: "",
-      shoulderLength: "",
-      skirtLength: "",
-      garmentLength: "",
-      armCircumference: "",
-      sleeveLength: "",
-      neckCircumference: "",
-      comment: "",
-      confirmData: false,
-      paymentMethod: "Kaspi Перевод",
-      agreedToTerms: false,
-      consentedToData: false,
-    },
+  const { control, handleSubmit, watch, reset, trigger, getValues } = useForm({
+    defaultValues: DEFAULT_VALUES,
   });
+
+  // Restore draft on mount
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+      if (raw) {
+        try {
+          const { savedStep, savedValues, savedPhoto } = JSON.parse(raw);
+          if (savedStep) setStep(savedStep);
+          if (savedValues) reset(savedValues);
+          if (savedPhoto) setReferencePhoto(savedPhoto);
+        } catch {}
+      }
+      setHydrated(true);
+    });
+  }, []);
+
+  // Save draft on every change
+  useEffect(() => {
+    if (!hydrated) return;
+    const subscription = watch((values) => {
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
+        savedStep: step,
+        savedValues: values,
+        savedPhoto: referencePhoto,
+      }));
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, step, referencePhoto, hydrated]);
+
+  // Also save when step changes (watch won't catch that)
+  useEffect(() => {
+    if (!hydrated) return;
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
+      savedStep: step,
+      savedValues: getValues(),
+      savedPhoto: referencePhoto,
+    }));
+  }, [step, hydrated]);
 
   const handleNext = async () => {
     const valid = await trigger(STEP_FIELDS[step] as any);
@@ -65,8 +99,6 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
   };
 
   const pickPhoto = async () => {
-    let imageUri: string | null = null;
-
     if (Platform.OS === "web") {
       const input = document.createElement("input");
       input.type = "file";
@@ -115,15 +147,17 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
   };
 
   const resetAll = () => {
-    reset();
+    reset(DEFAULT_VALUES);
     setStep(1);
     setReferencePhoto(null);
     setPhotoUploading(false);
+    AsyncStorage.removeItem(STORAGE_KEY); // ← clear draft on intentional reset
   };
 
   return {
     step, setStep, control, handleSubmit, watch,
     handleNext, reset: resetAll, pickPhoto,
     photoUploading, referencePhoto, setReferencePhoto,
+    hydrated, // ← export this so OrderForm can show a loader while restoring
   };
 };

@@ -39,30 +39,27 @@ export const PaymentControls = ({
       }
     };
 
-  return (
-    <View className="mt-2">
-      <Text className="text-gray-400 text-[10px] font-bold uppercase mb-2 ml-1">
-        Действие с оплатой
-      </Text>
+    return (
+      <View className="mt-2">
+        <Text className="text-gray-400 text-[10px] font-bold uppercase mb-2 ml-1">
+          Действие с оплатой
+        </Text>
 
-      <PaymentButton
-        label="Предоплата"
-        isPaid={isDepositConfirmed}
-        isLoading={pendingFlag === "deposit"}
-        onPress={handleConfirmDeposit}
-      />
+        <PaymentButton
+          label="Предоплата"
+          isPaid={isDepositConfirmed}
+          isLoading={pendingFlag === "deposit"}
+          onPress={handleConfirmDeposit}
+        />
 
-      {/* ← fixed: isPaid and isLoading, not isConfirmed and disabled */}
-      {isDepositConfirmed && (
         <PaymentButton
           label="Полная оплата"
           isPaid={isFullConfirmed}
           isLoading={pendingFlag === "full"}
           onPress={handleConfirmFull}
         />
-      )}
-    </View>
-  );
+      </View>
+    );
 };
 
 const PaymentButton = ({
