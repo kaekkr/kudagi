@@ -24,11 +24,17 @@ export const OrnamentCarousel = ({ control, name, ornamentList, getOrnamentImage
         bounces
       >
         {ornamentList.map((type) => {
-          const isSelected = value === type;
+          const isSelected = value?.includes(type);
           return (
             <Pressable
               key={type}
-              onPress={() => onChange(type)}
+              onPress={() => {
+                if (value?.includes(type)) {
+                  onChange(value.filter((item: string) => item !== type));
+                } else {
+                  onChange([...(value || []), type]);
+                }
+              }}
               delayPressIn={50}
               className="mr-4 items-center w-24"
             >

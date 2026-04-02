@@ -18,7 +18,7 @@ const DEFAULT_VALUES = {
   quantity: "1",
   fabricColor: "",
   fabricType: "",
-  ornamentType: "Тип 1",
+  ornamentType: [],
   ornamentPosition: "Ворот",
   embroideryColor: "",
   colorConfirmed: false,
