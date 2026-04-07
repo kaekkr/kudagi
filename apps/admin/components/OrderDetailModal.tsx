@@ -67,7 +67,10 @@ export const OrderDetailModal = ({
               label="Орнамент"
               value={order.ornamentType?.join(", ") || "-"}
             />
-            <Row label="Расположение" value={order.ornamentPosition} />
+            <Row
+              label="Расположение"
+              value={order.ornamentPosition?.join(", ") || "-"}
+            />
             <Row label="Цвет ниток" value={order.embroideryColor} />
             <Row label="Цвет ткани" value={order.fabricColor} />
             <Row label="Тип ткани" value={order.fabricType} />

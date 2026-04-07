@@ -20,7 +20,7 @@ export interface KuDagiOrder {
   fabricColor?: string;
   fabricType?: string;
   ornamentType: string[];
-  ornamentPosition: string;
+  ornamentPosition: string[];
   embroideryColor: string;
   contactPerson?: string;
   occasion?: string;

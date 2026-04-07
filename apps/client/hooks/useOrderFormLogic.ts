@@ -19,7 +19,7 @@ const DEFAULT_VALUES = {
   fabricColor: "",
   fabricType: "",
   ornamentType: [],
-  ornamentPosition: "Ворот",
+  ornamentPosition: [],
   embroideryColor: "",
   colorConfirmed: false,
   occasion: "Праздник",
@@ -70,19 +70,6 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
     });
   }, []);
 
-  // Save draft on every change
-  useEffect(() => {
-    if (!hydrated) return;
-    const subscription = watch((values) => {
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
-        savedStep: step,
-        savedValues: values,
-        savedPhoto: referencePhoto,
-      }));
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, step, referencePhoto, hydrated]);
-
   // Also save when step changes (watch won't catch that)
   useEffect(() => {
     if (!hydrated) return;
@@ -92,6 +79,23 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
       savedPhoto: referencePhoto,
     }));
   }, [step, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+
+    const subscription = watch((values) => {
+      // Не сохраняем, если это просто defaultValues
+      if (JSON.stringify(values) === JSON.stringify(DEFAULT_VALUES)) return;
+
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
+        savedStep: step,
+        savedValues: values,
+        savedPhoto: referencePhoto,
+      }));
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, step, referencePhoto, hydrated]);
 
   const handleNext = async () => {
     const valid = await trigger(STEP_FIELDS[step] as any);

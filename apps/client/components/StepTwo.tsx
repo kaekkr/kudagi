@@ -11,6 +11,7 @@ import { OrnamentCarousel } from "./ui/OrnamentCarousel";
 // Constants
 import { GARMENT_MODELS, ORNAMENT_POSITIONS } from "@/constants/orderConstants";
 import { GARMENT_MODELS_T, ORNAMENT_POSITIONS_T } from "@/constants/translations";
+import { MultiChipSelector } from "./ui/MultiChipSelector";
 
 interface StepTwoProps {
   t: any;
@@ -73,7 +74,11 @@ export const StepTwo = ({
       />
 
       <SectionLabel>{t.ornamentPosition}</SectionLabel>
-      <ChipSelector control={control} name="ornamentPosition" options={currentOrnamentPositions} />
+      <MultiChipSelector
+        control={control}
+        name="ornamentPosition"
+        options={currentOrnamentPositions}
+      />
 
       <SectionLabel>{t.embroideryColor}</SectionLabel>
       <InputField control={control} name="embroideryColor" placeholder={t.embroideryColor} />
