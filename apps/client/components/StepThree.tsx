@@ -5,7 +5,7 @@ import { Ruler } from "lucide-react-native";
 import { SectionLabel } from "./ui/SectionLabel";
 import { ChipSelector } from "./ui/ChipSelector";
 import { Checkbox } from "./ui/Checkbox";
-// Импортируем локализованные константы и типы
+import { validateDate } from "@/hooks/useOrderFormLogic";
 import {
   OCCASIONS_T,
   DELIVERY_METHODS_T,
@@ -19,7 +19,6 @@ interface StepThreeProps {
   lang: Lang;
 }
 
-// Вспомогательные функции масок остаются прежними
 function applyDateMask(raw: string): string {
   const digits = raw.replace(/\D/g, "").substring(0, 8);
   let result = "";
@@ -36,27 +35,26 @@ function applyNumericMask(raw: string): string {
 
 export const StepThree = ({ t, control, lang }: StepThreeProps) => {
   const method = useWatch({
-      control,
-      name: "measurementMethod",
-      defaultValue: "самостоятельно",
-    });
+    control,
+    name: "measurementMethod",
+    defaultValue: "самостоятельно",
+  });
 
-  // Динамический массив мерок, который зависит от текущего языка
   const MEASUREMENT_FIELDS = [
-    { name: "chest",            abbr: "Ог",     label: lang === "kaz" ? "Кеуде өлшемі"     : "Обхват груди" },
-    { name: "waist",            abbr: "От",     label: lang === "kaz" ? "Бел өлшемі"        : "Обхват талии" },
-    { name: "hips",             abbr: "Об",     label: lang === "kaz" ? "Жамбас өлшемі"     : "Обхват бедер" },
-    { name: "chestHeight",      abbr: "Вг",     label: lang === "kaz" ? "Кеуде биіктігі"    : "Высота груди" },
-    { name: "backWidth",        abbr: "Шсп",    label: lang === "kaz" ? "Арқа ені"          : "Ширина спинки" },
-    { name: "frontLength",      abbr: "Дтп",    label: lang === "kaz" ? "Алдыңғы ұзындық"  : "Длина полочки" },
-    { name: "backLength",       abbr: "Дтс",    label: lang === "kaz" ? "Арқа ұзындығы"    : "Длина спинки" },
-    { name: "shoulderLength",   abbr: "Дплеча", label: lang === "kaz" ? "Иық ұзындығы"     : "Длина плеча" },
-    { name: "skirtLength",      abbr: "Дю",     label: lang === "kaz" ? "Юбка ұзындығы"    : "Длина юбки" },
-    { name: "garmentLength",    abbr: "Дизд",   label: lang === "kaz" ? "Бұйым ұзындығы"   : "Длина изделия" },
-    { name: "armCircumference", abbr: "Орук",   label: lang === "kaz" ? "Қол өлшемі"       : "Обхват руки" },
-    { name: "sleeveLength",     abbr: "Д рук",  label: lang === "kaz" ? "Жең ұзындығы"     : "Длина рукавов" },
+    { name: "chest",             abbr: "Ог",     label: lang === "kaz" ? "Кеуде өлшемі"     : "Обхват груди" },
+    { name: "waist",             abbr: "От",     label: lang === "kaz" ? "Бел өлшемі"        : "Обхват талии" },
+    { name: "hips",              abbr: "Об",     label: lang === "kaz" ? "Жамбас өлшемі"     : "Обхват бедер" },
+    { name: "chestHeight",       abbr: "Вг",     label: lang === "kaz" ? "Кеуде биіктігі"    : "Высота груди" },
+    { name: "backWidth",         abbr: "Шсп",    label: lang === "kaz" ? "Арқа ені"          : "Ширина спинки" },
+    { name: "frontLength",       abbr: "Дтп",    label: lang === "kaz" ? "Алдыңғы ұзындық"  : "Длина полочки" },
+    { name: "backLength",        abbr: "Дтс",    label: lang === "kaz" ? "Арқа ұзындығы"    : "Длина спинки" },
+    { name: "shoulderLength",    abbr: "Дплеча", label: lang === "kaz" ? "Иық ұзындығы"     : "Длина плеча" },
+    { name: "skirtLength",       abbr: "Дю",     label: lang === "kaz" ? "Юбка ұзындығы"    : "Длина юбки" },
+    { name: "garmentLength",     abbr: "Дизд",   label: lang === "kaz" ? "Бұйым ұзындығы"   : "Длина изделия" },
+    { name: "armCircumference",  abbr: "Орук",   label: lang === "kaz" ? "Қол өлшемі"       : "Обхват руки" },
+    { name: "sleeveLength",      abbr: "Д рук",  label: lang === "kaz" ? "Жең ұзындығы"     : "Длина рукавов" },
     { name: "neckCircumference", abbr: "Шея",    label: lang === "kaz" ? "Мойын өлшемі"     : "Обхват шеи" },
-    { name: "height",           abbr: "Бой",    label: lang === "kaz" ? "Бойы"              : "Рост" },
+    { name: "height",            abbr: "Бой",    label: lang === "kaz" ? "Бойы"              : "Рост" },
   ];
 
   return (
@@ -64,13 +62,11 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
       <Text className="text-3xl font-bold mb-1">{t.newOrder}</Text>
       <Text className="text-gray-400 mb-6">{t.step3title}</Text>
 
-      {/* Заголовок мерок */}
       <View className="flex-row items-center mb-3">
         <Ruler size={18} color={KU_GOLD} />
         <Text className="ml-2 font-semibold text-gray-800">{t.measurements}</Text>
       </View>
 
-      {/* Переключатель способа снятия мерок */}
       <Controller
         control={control}
         name="measurementMethod"
@@ -82,7 +78,7 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
             ].map((m) => (
               <Pressable
                 key={m.value}
-                onPress={() => onChange(m.value)} // Теперь это один и тот же onChange
+                onPress={() => onChange(m.value)}
                 className="flex-row items-center mr-6"
               >
                 <View
@@ -100,7 +96,6 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
         )}
       />
 
-      {/* Поля ввода мерок */}
       {method === "самостоятельно" && (
         <View className="flex-row flex-wrap justify-between mb-2">
           {MEASUREMENT_FIELDS.map((f) => (
@@ -145,7 +140,13 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
       <Controller
         control={control}
         name="desiredDate"
-        rules={{ required: t.errorDate }}
+        rules={{
+          required: t.errorDate,
+          validate: (value) => {
+            const result = validateDate(value);
+            return result === true ? true : result;
+          },
+        }}
         render={({ field: { onChange, value }, fieldState: { error } }) => (
           <View className="mb-3">
             <TextInput
@@ -157,7 +158,9 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
               keyboardType="numeric"
               maxLength={10}
             />
-            {error && <Text className="text-red-400 text-xs mt-1 ml-1">{error.message}</Text>}
+            {error && (
+              <Text className="text-red-400 text-xs mt-1 ml-1">{error.message}</Text>
+            )}
           </View>
         )}
       />

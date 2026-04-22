@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEY = "kudagi_order_draft";
 
-const DEFAULT_VALUES = {
+export const DEFAULT_VALUES = {
   clientName: "",
   phone: "",
   whatsApp: "",
@@ -20,6 +20,9 @@ const DEFAULT_VALUES = {
   fabricType: "",
   ornamentType: [],
   ornamentPosition: [],
+  // Per-garment ornaments: array of { ornamentType: string[], ornamentPosition: string[] }
+  // Indexed by garment item (0-based). Populated dynamically based on quantity.
+  garmentOrnaments: [] as { ornamentType: string[]; ornamentPosition: string[] }[],
   embroideryColor: "",
   colorConfirmed: false,
   occasion: "Праздник",
@@ -45,6 +48,22 @@ const STEP_FIELDS: Record<number, string[]> = {
   4: ["agreedToTerms", "consentedToData"],
 };
 
+/**
+ * Validates a date string in dd.mm.yyyy format.
+ * Year must be between 2000 and 2090.
+ */
+export function validateDate(value: string): true | string {
+  if (!value || value.length < 10) return "Введите дату в формате дд.мм.гггг";
+  const parts = value.split(".");
+  if (parts.length !== 3) return "Неверный формат даты";
+  const [dd, mm, yyyy] = parts.map(Number);
+  if (isNaN(dd) || isNaN(mm) || isNaN(yyyy)) return "Неверный формат даты";
+  if (yyyy < 2000 || yyyy > 2090) return "Год должен быть от 2000 до 2090";
+  if (mm < 1 || mm > 12) return "Неверный месяц";
+  if (dd < 1 || dd > 31) return "Неверный день";
+  return true;
+}
+
 export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<string>) => {
   const [step, setStep] = useState(1);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -55,13 +74,13 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
     defaultValues: DEFAULT_VALUES,
   });
 
-  // Restore draft on mount
+  // Restore draft on mount — always start at step 1 to prevent accidental re-submit
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
       if (raw) {
         try {
-          const { savedStep, savedValues, savedPhoto } = JSON.parse(raw);
-          if (savedStep) setStep(savedStep);
+          const { savedValues, savedPhoto } = JSON.parse(raw);
+          // Note: savedStep is intentionally ignored — always start at step 1
           if (savedValues) reset(savedValues);
           if (savedPhoto) setReferencePhoto(savedPhoto);
         } catch {}
@@ -70,21 +89,21 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
     });
   }, []);
 
-  // Also save when step changes (watch won't catch that)
+  // Save draft when step changes
   useEffect(() => {
     if (!hydrated) return;
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
-      savedStep: step,
+      savedStep: step, // kept for reference but not restored
       savedValues: getValues(),
       savedPhoto: referencePhoto,
     }));
   }, [step, hydrated]);
 
+  // Save draft when form values change
   useEffect(() => {
     if (!hydrated) return;
 
     const subscription = watch((values) => {
-      // Не сохраняем, если это просто defaultValues
       if (JSON.stringify(values) === JSON.stringify(DEFAULT_VALUES)) return;
 
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -119,12 +138,11 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
       try {
         const url = await uploadReferencePhoto(file);
         setReferencePhoto(url);
-      } catch (e) {
+      } catch {
         alert("Ошибка загрузки в облако");
       } finally {
         setPhotoUploading(false);
       }
-
     } else {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -135,13 +153,11 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
         setPhotoUploading(true);
         try {
           const asset = result.assets[0];
-
           const response = await fetch(asset.uri);
           const blob = await response.blob();
-
           const url = await uploadReferencePhoto(blob);
           setReferencePhoto(url);
-        } catch (e) {
+        } catch {
           alert("Ошибка загрузки в облако");
         } finally {
           setPhotoUploading(false);
@@ -155,13 +171,13 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
     setStep(1);
     setReferencePhoto(null);
     setPhotoUploading(false);
-    AsyncStorage.removeItem(STORAGE_KEY); // ← clear draft on intentional reset
+    AsyncStorage.removeItem(STORAGE_KEY);
   };
 
   return {
     step, setStep, control, handleSubmit, watch,
     handleNext, reset: resetAll, pickPhoto,
     photoUploading, referencePhoto, setReferencePhoto,
-    hydrated, // ← export this so OrderForm can show a loader while restoring
+    hydrated,
   };
 };

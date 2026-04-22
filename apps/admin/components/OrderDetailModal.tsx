@@ -31,6 +31,10 @@ export const OrderDetailModal = ({
     }
   };
 
+  // Use per-garment ornaments if available, otherwise fall back to flat fields
+  const hasPerGarmentOrnaments =
+    Array.isArray(order.garmentOrnaments) && order.garmentOrnaments.length > 0;
+
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet">
       <View className="flex-1 bg-gray-50">
@@ -63,24 +67,63 @@ export const OrderDetailModal = ({
           <Card>
             <Row label="Модель" value={order.garmentModel} />
             <Row label="Вид заказа" value={order.orderType} />
-            <Row
-              label="Орнамент"
-              value={order.ornamentType?.join(", ") || "-"}
-            />
-            <Row
-              label="Расположение"
-              value={order.ornamentPosition?.join(", ") || "-"}
-            />
+            <Row label="Количество" value={order.quantity ? `${order.quantity} шт.` : "—"} />
             <Row label="Цвет ниток" value={order.embroideryColor} />
             <Row label="Цвет ткани" value={order.fabricColor} />
             <Row label="Тип ткани" value={order.fabricType} />
-            <Row label="Количество" value={order.quantity ? `${order.quantity} шт.` : "—"} />
             <Row label="Повод" value={order.occasion} />
             <Row label="Нужен к" value={order.desiredDate} />
             <Row label="Доставка" value={order.deliveryMethod} />
           </Card>
 
-          {/* Полная сетка мерок */}
+          {/* Ornaments — per-garment or flat */}
+          <SectionTitle>Орнаменты</SectionTitle>
+          {hasPerGarmentOrnaments ? (
+            // Per-garment: one card per item
+            order.garmentOrnaments!.map((g, i) => (
+              <Card key={i}>
+                {/* Garment index badge */}
+                <View className="flex-row items-center mb-3">
+                  <View
+                    style={{
+                      backgroundColor: "#C5A059",
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 3,
+                      marginRight: 8,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>
+                      #{i + 1}
+                    </Text>
+                  </View>
+                  <Text className="font-semibold text-gray-700">Изделие {i + 1}</Text>
+                </View>
+                <Row
+                  label="Орнамент"
+                  value={g.ornamentType?.join(", ") || "—"}
+                />
+                <Row
+                  label="Расположение"
+                  value={g.ornamentPosition?.join(", ") || "—"}
+                />
+              </Card>
+            ))
+          ) : (
+            // Legacy flat ornament fields
+            <Card>
+              <Row
+                label="Орнамент"
+                value={order.ornamentType?.join(", ") || "—"}
+              />
+              <Row
+                label="Расположение"
+                value={order.ornamentPosition?.join(", ") || "—"}
+              />
+            </Card>
+          )}
+
+          {/* Мерки */}
           <SectionTitle>Мерки (см)</SectionTitle>
           <Card>
             <Row label="Рост" value={order.measurements?.height} />
@@ -105,7 +148,9 @@ export const OrderDetailModal = ({
               <SectionTitle>Комментарий клиента</SectionTitle>
               <Card>
                 <View style={{ paddingVertical: 12 }}>
-                  <Text style={{ color: "#374151", fontSize: 14, lineHeight: 20 }}>{order.comment}</Text>
+                  <Text style={{ color: "#374151", fontSize: 14, lineHeight: 20 }}>
+                    {order.comment}
+                  </Text>
                 </View>
               </Card>
             </>
@@ -139,7 +184,6 @@ export const OrderDetailModal = ({
               label="Предоплата 50%"
               value={order.totalPrice ? `${(order.totalPrice / 2).toLocaleString("ru-RU")} ₸` : "—"}
             />
-
             <View className="mt-2 border-t border-gray-50 pt-2">
               <PaymentControls
                 order={order}
@@ -161,7 +205,8 @@ export const OrderDetailModal = ({
             </Text>
             <View className="flex-row flex-wrap">
               {STATUS_ORDER.map((s) => {
-                const isFinancialStatus = s === "Предоплата оплачена" || s === "Оплачено полностью";
+                const isFinancialStatus =
+                  s === "Предоплата оплачена" || s === "Оплачено полностью";
                 if (isFinancialStatus) return null;
 
                 const active = selected === s;
@@ -173,7 +218,11 @@ export const OrderDetailModal = ({
                       active ? "border-[#C5A059] bg-[#C5A059]/10" : "border-gray-100 bg-white"
                     }`}
                   >
-                    <Text className={`text-xs font-medium ${active ? "text-[#C5A059]" : "text-gray-500"}`}>
+                    <Text
+                      className={`text-xs font-medium ${
+                        active ? "text-[#C5A059]" : "text-gray-500"
+                      }`}
+                    >
                       {s}
                     </Text>
                   </Pressable>

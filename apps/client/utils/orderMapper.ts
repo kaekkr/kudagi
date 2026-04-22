@@ -1,6 +1,28 @@
-import { KuDagiOrder } from "@kudagi/core";
+import { KuDagiOrder, GarmentOrnament } from "@kudagi/core";
 
 export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagiOrder => {
+  const qty = parseInt(data.quantity) || 1;
+
+  // Build per-garment ornaments array
+  // garmentOrnaments in form is: { ornamentType: string[], ornamentPosition: string[] }[]
+  const garmentOrnaments: GarmentOrnament[] = [];
+  if (qty > 1 && Array.isArray(data.garmentOrnaments) && data.garmentOrnaments.length > 0) {
+    for (let i = 0; i < qty; i++) {
+      garmentOrnaments.push({
+        ornamentType: data.garmentOrnaments[i]?.ornamentType ?? [],
+        ornamentPosition: data.garmentOrnaments[i]?.ornamentPosition ?? [],
+      });
+    }
+  }
+
+  // For legacy single-item orders, keep flat fields populated
+  const flatOrnamentType = qty === 1
+    ? (data.ornamentType ?? [])
+    : (garmentOrnaments[0]?.ornamentType ?? data.ornamentType ?? []);
+  const flatOrnamentPosition = qty === 1
+    ? (data.ornamentPosition ?? [])
+    : (garmentOrnaments[0]?.ornamentPosition ?? data.ornamentPosition ?? []);
+
   return {
     id: Date.now().toString(36) + Math.random().toString(36).substring(2, 7),
     clientName: data.clientName?.trim() || "Клиент",
@@ -11,11 +33,12 @@ export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagi
     contactPerson: data.contactPerson?.trim() || "",
     orderType: data.orderType,
     garmentModel: data.garmentModel,
-    quantity: parseInt(data.quantity) || 1,
+    quantity: qty,
     fabricColor: data.fabricColor?.trim() || "",
     fabricType: data.fabricType?.trim() || "",
-    ornamentType: data.ornamentType,
-    ornamentPosition: data.ornamentPosition,
+    ornamentType: flatOrnamentType,
+    ornamentPosition: flatOrnamentPosition,
+    garmentOrnaments: qty > 1 ? garmentOrnaments : [],
     embroideryColor: data.embroideryColor?.trim() || "",
     occasion: data.occasion,
     desiredDate: data.desiredDate?.trim() || "",
@@ -41,6 +64,7 @@ export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagi
     },
     totalPrice: 0,
     depositPaid: false,
+    fullPaid: false,
     paymentMethod: data.paymentMethod,
     status: "Принято" as const,
     createdAt: new Date().toISOString(),

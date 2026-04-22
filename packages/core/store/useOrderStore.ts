@@ -25,6 +25,7 @@ function fromRow(row: any): KuDagiOrder {
     fabricType: row.fabric_type ?? "",
     ornamentType: row.ornament_type ?? [],
     ornamentPosition: row.ornament_position ?? [],
+    garmentOrnaments: row.garment_ornaments ?? [],
     embroideryColor: row.embroidery_color ?? "",
     contactPerson: row.contact_person ?? "",
     occasion: row.occasion ?? "",
@@ -74,6 +75,7 @@ function toRow(order: KuDagiOrder) {
     fabric_type: order.fabricType,
     ornament_type: order.ornamentType ?? [],
     ornament_position: order.ornamentPosition ?? [],
+    garment_ornaments: order.garmentOrnaments ?? [],
     embroidery_color: order.embroideryColor,
     contact_person: order.contactPerson,
     occasion: order.occasion,
@@ -124,6 +126,11 @@ interface OrderState {
   addOrder: (order: KuDagiOrder) => Promise<void>;
   updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
   updateOrderPayment: (id: string, updates: { depositPaid?: boolean; fullPaid?: boolean }) => Promise<void>;
+  /**
+   * Check if an order with the same phone + garmentModel + desiredDate already exists.
+   * Returns the existing order if found, null otherwise.
+   */
+  checkDuplicate: (phone: string, garmentModel: string, desiredDate: string) => Promise<KuDagiOrder | null>;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -157,31 +164,45 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }
   },
 
-  updateOrderPayment: async (id: string, updates: { depositPaid?: boolean; fullPaid?: boolean }) => {
-      // 1. Сначала обновляем локально (Optimistic UI)
-      set((state) => ({
-        orders: state.orders.map((o) =>
-          o.id === id ? { ...o, ...updates } : o
-        ),
-      }));
-
-      try {
-        // 2. Готовим тело запроса для Supabase (snake_case)
-        const body: any = {};
-        if (updates.depositPaid !== undefined) body.deposit_paid = updates.depositPaid;
-        if (updates.fullPaid !== undefined) body.full_paid = updates.fullPaid;
-
-        await db(`/orders?id=eq.${id}`, {
-          method: "PATCH",
-          headers: { Prefer: "return=minimal" },
-          body: JSON.stringify(body),
-        });
-      } catch (e: any) {
-        console.error("Failed to update payment", e);
-        // Если упало — перекачиваем данные, чтобы вернуть как было
-        get().fetchOrders();
+  checkDuplicate: async (phone: string, garmentModel: string, desiredDate: string) => {
+    try {
+      // Query Supabase for orders matching all three fields
+      const encoded = encodeURIComponent(phone.trim());
+      const encodedModel = encodeURIComponent(garmentModel.trim());
+      const encodedDate = encodeURIComponent(desiredDate.trim());
+      const data = await db(
+        `/orders?phone=eq.${encoded}&garment_model=eq.${encodedModel}&desired_date=eq.${encodedDate}&select=*&limit=1`
+      );
+      if (data && data.length > 0) {
+        return fromRow(data[0]);
       }
-    },
+      return null;
+    } catch {
+      // If the check fails, don't block the user — just allow submission
+      return null;
+    }
+  },
+
+  updateOrderPayment: async (id: string, updates: { depositPaid?: boolean; fullPaid?: boolean }) => {
+    set((state) => ({
+      orders: state.orders.map((o) =>
+        o.id === id ? { ...o, ...updates } : o
+      ),
+    }));
+    try {
+      const body: any = {};
+      if (updates.depositPaid !== undefined) body.deposit_paid = updates.depositPaid;
+      if (updates.fullPaid !== undefined) body.full_paid = updates.fullPaid;
+      await db(`/orders?id=eq.${id}`, {
+        method: "PATCH",
+        headers: { Prefer: "return=minimal" },
+        body: JSON.stringify(body),
+      });
+    } catch (e: any) {
+      console.error("Failed to update payment", e);
+      get().fetchOrders();
+    }
+  },
 
   updateOrderStatus: async (id: string, status: OrderStatus) => {
     const now = new Date().toISOString();

@@ -7,6 +7,12 @@ export type OrderStatus =
   | "Отправка"
   | "Выдано";
 
+/** Ornament config for a single garment item in the order */
+export interface GarmentOrnament {
+  ornamentType: string[];
+  ornamentPosition: string[];
+}
+
 export interface KuDagiOrder {
   id: string;
   clientName: string;
@@ -19,8 +25,18 @@ export interface KuDagiOrder {
   quantity?: number;
   fabricColor?: string;
   fabricType?: string;
+  /**
+   * Legacy flat ornament fields (kept for backward compatibility with old orders).
+   * For new orders with quantity > 1, use garmentOrnaments instead.
+   */
   ornamentType: string[];
   ornamentPosition: string[];
+  /**
+   * Per-garment ornament configuration.
+   * Index 0 = first garment, index 1 = second garment, etc.
+   * If empty, fall back to ornamentType / ornamentPosition.
+   */
+  garmentOrnaments?: GarmentOrnament[];
   embroideryColor: string;
   contactPerson?: string;
   occasion?: string;
@@ -30,20 +46,20 @@ export interface KuDagiOrder {
   referencePhotoUrl?: string;
   consentedToData?: boolean;
   measurements: {
-    chest: number;       // Og - обхват груди
-    waist: number;       // Ot - обхват талии
-    hips: number;        // Ob - обхват бедер
-    chestHeight: number; // Vg - высота груди
-    backWidth: number;   // Shsp - ширина спинки
-    frontLength: number; // Dtp - длина полочки
-    backLength: number;  // Dts - длина спинки
-    shoulderLength: number; // Dplecha - длина плеча
-    skirtLength: number; // Dyu - длина юбки
-    garmentLength: number; // Dizd - длина изделия
-    armCircumference: number; // Oruk - обхват руки
-    sleeveLength: number;    // D ruk - длина рукавов
-    neckCircumference: number; // обхват шеи
-    height: number;      // рост
+    chest: number;
+    waist: number;
+    hips: number;
+    chestHeight: number;
+    backWidth: number;
+    frontLength: number;
+    backLength: number;
+    shoulderLength: number;
+    skirtLength: number;
+    garmentLength: number;
+    armCircumference: number;
+    sleeveLength: number;
+    neckCircumference: number;
+    height: number;
   };
   totalPrice: number;
   depositPaid: boolean;
