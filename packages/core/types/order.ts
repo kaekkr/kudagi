@@ -15,6 +15,11 @@ export interface GarmentOrnament {
 
 export interface KuDagiOrder {
   id: string;
+  /**
+   * Client-defined name for this order, e.g. "Куртка для сына".
+   * Used together with phone for duplicate detection.
+   */
+  orderName?: string;
   clientName: string;
   phone: string;
   whatsApp?: string;

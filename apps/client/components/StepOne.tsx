@@ -21,6 +21,29 @@ export const StepOne = ({ t, lang, control, getTypePhoto }: StepOneProps) => {
       <Text className="text-3xl font-bold mb-1">{t.newOrder}</Text>
       <Text className="text-gray-400 mb-6">{t.step1title}</Text>
 
+      {/* Order name — for uniqueness, client names it themselves */}
+      <InputField
+        control={control}
+        name="orderName"
+        placeholder={lang === "kaz" ? "Бұйымның аты (мыс: Ұлыма куртка)" : "Название заказа (напр: Куртка для сына)"}
+        rules={{ required: lang === "kaz" ? "Бұйым атын енгізіңіз" : "Придумайте название для заказа" }}
+      />
+
+      {/* Hint text */}
+      <Text
+        style={{
+          fontSize: 11,
+          color: "#9CA3AF",
+          marginTop: -8,
+          marginBottom: 14,
+          marginLeft: 4,
+        }}
+      >
+        {lang === "kaz"
+          ? "Бұл ат сіздің тапсырысыңызды ажырату үшін қолданылады"
+          : "Это имя помогает отличить ваши заказы друг от друга"}
+      </Text>
+
       {/* Client Information */}
       <InputField
         control={control}

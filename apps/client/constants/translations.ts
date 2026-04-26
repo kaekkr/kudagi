@@ -31,8 +31,8 @@ export const OCCASIONS_T: Record<Lang, string[]> = {
 };
 
 export const DELIVERY_METHODS_T: Record<Lang, string[]> = {
-  kaz: ["Өзі алып кетеді", "Курьер", "Пошта / қалааралық"],
-  rus: ["Самовывоз", "Курьер", "Почта / межгород"],
+  kaz: ["Өзі алып кетеді", "Курьер"],
+  rus: ["Самовывоз", "Курьер"],
 };
 
 export const T: Record<Lang, Record<string, string>> = {

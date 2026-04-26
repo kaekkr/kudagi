@@ -20,7 +20,10 @@ import { PaymentView } from "./PaymentView";
 import { FormHeader } from "./ui/FormHeader";
 import { NavigationFooter } from "./ui/NavigationFooter";
 
+import { useAutoUpdate } from "@/hooks/useAutoUpdate";
+
 export default function OrderForm() {
+  useAutoUpdate();
   const [lang, setLang] = useState<Lang>("kaz");
   const t = T[lang];
   const [showPayment, setShowPayment] = useState(false);
@@ -48,8 +51,7 @@ export default function OrderForm() {
     try {
       const existing = await checkDuplicate(
         data.phone ?? "",
-        data.garmentModel ?? "",
-        data.desiredDate ?? ""
+        data.orderName ?? ""
       );
       if (existing) {
         setDuplicateOrder(existing);
@@ -176,7 +178,8 @@ export default function OrderForm() {
             {duplicateOrder && (
               <View className="bg-gray-50 rounded-2xl p-4 mb-5">
                 <Text className="text-xs text-gray-400 mb-1">Существующий заказ</Text>
-                <Text className="font-semibold text-gray-800">{duplicateOrder.clientName}</Text>
+                <Text className="font-semibold text-gray-800">{duplicateOrder.orderName || "—"}</Text>
+                <Text className="text-sm text-gray-500">{duplicateOrder.clientName}</Text>
                 <Text className="text-sm text-gray-500">{duplicateOrder.phone}</Text>
                 <Text className="text-sm text-gray-500">
                   {duplicateOrder.garmentModel} · {duplicateOrder.quantity} шт.

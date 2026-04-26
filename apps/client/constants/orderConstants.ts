@@ -29,7 +29,7 @@ export const ORNAMENT_PHOTOS: Record<string, any> = {
 export const GARMENT_MODELS = ["Платье", "Жилет", "Чапан", "Пальто", "Другое"];
 export const ORNAMENT_POSITIONS = ["Ворот", "Рукав", "Карман", "Подол", "Другое"];
 export const OCCASIONS = ["Свадьба", "Праздник", "Юбилей", "Другое"];
-export const DELIVERY_METHODS = ["Самовывоз", "Курьер", "Почта / межгород"];
+export const DELIVERY_METHODS = ["Самовывоз", "Курьер"];
 
 export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 export const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY!;

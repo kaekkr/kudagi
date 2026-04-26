@@ -65,6 +65,7 @@ export const OrderDetailModal = ({
           {/* Детали заказа */}
           <SectionTitle>Заказ</SectionTitle>
           <Card>
+            {order.orderName ? <Row label="Название заказа" value={order.orderName} /> : null}
             <Row label="Модель" value={order.garmentModel} />
             <Row label="Вид заказа" value={order.orderType} />
             <Row label="Количество" value={order.quantity ? `${order.quantity} шт.` : "—"} />

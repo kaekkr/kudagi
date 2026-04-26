@@ -7,6 +7,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const STORAGE_KEY = "kudagi_order_draft";
 
 export const DEFAULT_VALUES = {
+  orderName: "",
   clientName: "",
   phone: "",
   whatsApp: "",
@@ -42,7 +43,7 @@ export const DEFAULT_VALUES = {
 };
 
 const STEP_FIELDS: Record<number, string[]> = {
-  1: ["clientName", "phone", "city"],
+  1: ["orderName", "clientName", "phone", "city"],
   2: ["quantity", "fabricColor", "embroideryColor", "colorConfirmed"],
   3: ["desiredDate", "deadlineConfirmed", "confirmData"],
   4: ["agreedToTerms", "consentedToData"],

@@ -13,6 +13,7 @@ const BASE_HEADERS = {
 function fromRow(row: any): KuDagiOrder {
   return {
     id: row.id,
+    orderName: row.order_name ?? "",
     clientName: row.client_name,
     phone: row.phone ?? "",
     whatsApp: row.whats_app ?? "",
@@ -63,6 +64,7 @@ function fromRow(row: any): KuDagiOrder {
 function toRow(order: KuDagiOrder) {
   return {
     id: order.id,
+    order_name: order.orderName ?? "",
     client_name: order.clientName,
     phone: order.phone,
     whats_app: order.whatsApp,
@@ -127,10 +129,10 @@ interface OrderState {
   updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
   updateOrderPayment: (id: string, updates: { depositPaid?: boolean; fullPaid?: boolean }) => Promise<void>;
   /**
-   * Check if an order with the same phone + garmentModel + desiredDate already exists.
+   * Check if an order with the same phone + orderName already exists.
    * Returns the existing order if found, null otherwise.
    */
-  checkDuplicate: (phone: string, garmentModel: string, desiredDate: string) => Promise<KuDagiOrder | null>;
+  checkDuplicate: (phone: string, orderName: string) => Promise<KuDagiOrder | null>;
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
@@ -164,21 +166,17 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }
   },
 
-  checkDuplicate: async (phone: string, garmentModel: string, desiredDate: string) => {
+  checkDuplicate: async (phone: string, orderName: string) => {
+    if (!orderName.trim()) return null; // no name = skip check
     try {
-      // Query Supabase for orders matching all three fields
-      const encoded = encodeURIComponent(phone.trim());
-      const encodedModel = encodeURIComponent(garmentModel.trim());
-      const encodedDate = encodeURIComponent(desiredDate.trim());
+      const encodedPhone = encodeURIComponent(phone.trim());
+      const encodedName = encodeURIComponent(orderName.trim());
       const data = await db(
-        `/orders?phone=eq.${encoded}&garment_model=eq.${encodedModel}&desired_date=eq.${encodedDate}&select=*&limit=1`
+        `/orders?phone=eq.${encodedPhone}&order_name=eq.${encodedName}&select=*&limit=1`
       );
-      if (data && data.length > 0) {
-        return fromRow(data[0]);
-      }
+      if (data && data.length > 0) return fromRow(data[0]);
       return null;
     } catch {
-      // If the check fails, don't block the user — just allow submission
       return null;
     }
   },

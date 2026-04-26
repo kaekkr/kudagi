@@ -25,6 +25,7 @@ export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagi
 
   return {
     id: Date.now().toString(36) + Math.random().toString(36).substring(2, 7),
+    orderName: data.orderName?.trim() || "",
     clientName: data.clientName?.trim() || "Клиент",
     phone: data.phone?.trim() || "-",
     whatsApp: data.whatsApp?.trim() || "",
