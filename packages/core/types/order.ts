@@ -7,18 +7,39 @@ export type OrderStatus =
   | "Отправка"
   | "Выдано";
 
-/** Ornament config for a single garment item in the order */
 export interface GarmentOrnament {
   ornamentType: string[];
   ornamentPosition: string[];
 }
 
+export interface OrderMeasurements {
+  height: number;
+  chest: number;
+  waist: number;
+  hips: number;
+  chestHeight: number;
+  backWidth: number;
+  frontLength: number;
+  backLength: number;
+  shoulderLength: number;
+  skirtLength: number;
+  garmentLength: number;
+  armCircumference: number;
+  sleeveLength: number;
+  neckCircumference: number;
+}
+
+/** Full config for one person in a paired order */
+export interface PairedPerson {
+  garmentModel: string;
+  ornamentType: string[];
+  ornamentPosition: string[];
+  measurements: OrderMeasurements;
+}
+
 export interface KuDagiOrder {
   id: string;
-  /**
-   * Client-defined name for this order, e.g. "Куртка для сына".
-   * Used together with phone for duplicate detection.
-   */
+  /** Client-defined name, e.g. "Куртка для сына". Used with phone for duplicate check. */
   orderName?: string;
   clientName: string;
   phone: string;
@@ -26,22 +47,16 @@ export interface KuDagiOrder {
   city?: string;
   address?: string;
   orderType: string;
+  /** Used for standard/non-paired orders */
   garmentModel?: string;
-  quantity?: number;
   fabricColor?: string;
   fabricType?: string;
-  /**
-   * Legacy flat ornament fields (kept for backward compatibility with old orders).
-   * For new orders with quantity > 1, use garmentOrnaments instead.
-   */
   ornamentType: string[];
   ornamentPosition: string[];
-  /**
-   * Per-garment ornament configuration.
-   * Index 0 = first garment, index 1 = second garment, etc.
-   * If empty, fall back to ornamentType / ornamentPosition.
-   */
   garmentOrnaments?: GarmentOrnament[];
+  /** Populated only when orderType === "Парный" */
+  person1?: PairedPerson;
+  person2?: PairedPerson;
   embroideryColor: string;
   contactPerson?: string;
   occasion?: string;
@@ -50,22 +65,8 @@ export interface KuDagiOrder {
   comment?: string;
   referencePhotoUrl?: string;
   consentedToData?: boolean;
-  measurements: {
-    chest: number;
-    waist: number;
-    hips: number;
-    chestHeight: number;
-    backWidth: number;
-    frontLength: number;
-    backLength: number;
-    shoulderLength: number;
-    skirtLength: number;
-    garmentLength: number;
-    armCircumference: number;
-    sleeveLength: number;
-    neckCircumference: number;
-    height: number;
-  };
+  /** Measurements for standard orders (person1.measurements used for paired) */
+  measurements: OrderMeasurements;
   totalPrice: number;
   depositPaid: boolean;
   fullPaid: boolean;

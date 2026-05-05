@@ -1,4 +1,4 @@
-import { KuDagiOrder, OrderStatus, useOrderStore } from "@kudagi/core";
+import { KuDagiOrder, OrderStatus, PairedPerson, useOrderStore } from "@kudagi/core";
 import { useState } from "react";
 import { Modal, Pressable, View, Text, ScrollView, Image } from "react-native";
 import { SectionTitle } from "./ui/SectionTitle";
@@ -8,6 +8,52 @@ import { formatDate } from "@/utils/formatDate";
 import { STATUS_ORDER } from "@/constants/constants";
 import { PaymentControls } from "./PaymentControls";
 
+const MEASUREMENT_LABELS: { key: keyof PairedPerson["measurements"]; label: string }[] = [
+  { key: "height",            label: "Рост" },
+  { key: "chest",             label: "Обхват груди (Ог)" },
+  { key: "waist",             label: "Обхват талии (От)" },
+  { key: "hips",              label: "Обхват бедер (Об)" },
+  { key: "chestHeight",       label: "Высота груди (Вг)" },
+  { key: "backWidth",         label: "Ширина спинки (Шсп)" },
+  { key: "frontLength",       label: "Длина полочки (Дтп)" },
+  { key: "backLength",        label: "Длина спинки (Дтс)" },
+  { key: "shoulderLength",    label: "Длина плеча" },
+  { key: "neckCircumference", label: "Обхват шеи" },
+  { key: "armCircumference",  label: "Обхват руки" },
+  { key: "sleeveLength",      label: "Длина рукава" },
+  { key: "skirtLength",       label: "Длина юбки" },
+  { key: "garmentLength",     label: "Длина изделия" },
+];
+
+const KU_GOLD = "#C5A059";
+
+const PersonCard = ({ person, label, index }: { person: PairedPerson; label: string; index: number }) => (
+  <Card>
+    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+      <View style={{
+        backgroundColor: KU_GOLD, borderRadius: 8,
+        paddingHorizontal: 10, paddingVertical: 4, marginRight: 8,
+      }}>
+        <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>{index + 1}</Text>
+      </View>
+      <Text style={{ fontWeight: "600", color: "#374151", fontSize: 15 }}>{label}</Text>
+    </View>
+    <Row label="Модель" value={person.garmentModel} />
+    <Row label="Орнамент" value={person.ornamentType?.join(", ") || "—"} />
+    <Row label="Расположение" value={person.ornamentPosition?.join(", ") || "—"} />
+    <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: "#F9FAFB", paddingTop: 8 }}>
+      <Text style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>
+        Мерки (см)
+      </Text>
+      {MEASUREMENT_LABELS.map(({ key, label }) =>
+        person.measurements?.[key] ? (
+          <Row key={key} label={label} value={person.measurements[key]} />
+        ) : null
+      )}
+    </View>
+  </Card>
+);
+
 export const OrderDetailModal = ({
   order,
   onClose,
@@ -15,15 +61,13 @@ export const OrderDetailModal = ({
   order: KuDagiOrder;
   onClose: () => void;
 }) => {
-  const updateOrderStatus = useOrderStore((s) => s.updateOrderStatus);
-  const updateOrderPayment = useOrderStore(s => s.updateOrderPayment);
+  const updateOrderStatus  = useOrderStore((s) => s.updateOrderStatus);
+  const updateOrderPayment = useOrderStore((s) => s.updateOrderPayment);
   const [selected, setSelected] = useState<OrderStatus>(order.status);
 
   const handleSave = async () => {
     try {
-      if (selected !== order.status) {
-        await updateOrderStatus(order.id, selected);
-      }
+      if (selected !== order.status) await updateOrderStatus(order.id, selected);
     } catch (e) {
       console.error("Failed to save status", e);
     } finally {
@@ -31,19 +75,21 @@ export const OrderDetailModal = ({
     }
   };
 
-  // Use per-garment ornaments if available, otherwise fall back to flat fields
+  const isPaired = order.orderType === "Парный";
   const hasPerGarmentOrnaments =
-    Array.isArray(order.garmentOrnaments) && order.garmentOrnaments.length > 0;
+    !isPaired &&
+    Array.isArray(order.garmentOrnaments) &&
+    order.garmentOrnaments.length > 0;
 
   return (
     <Modal visible animationType="slide" presentationStyle="pageSheet">
       <View className="flex-1 bg-gray-50">
-        {/* Header */}
         <View className="flex-row items-center justify-between px-5 pt-6 pb-4 bg-white border-b border-gray-100">
           <View className="flex-1 mr-4">
-            <Text className="text-lg font-bold" numberOfLines={1}>
-              {order.clientName}
-            </Text>
+            <Text className="text-lg font-bold" numberOfLines={1}>{order.clientName}</Text>
+            {order.orderName ? (
+              <Text className="text-xs text-gray-400 mt-0.5">«{order.orderName}»</Text>
+            ) : null}
           </View>
           <Pressable onPress={onClose} className="p-2">
             <Text className="text-gray-400 text-xl">✕</Text>
@@ -57,18 +103,17 @@ export const OrderDetailModal = ({
             <Row label="Имя" value={order.clientName} />
             <Row label="Телефон" value={order.phone} />
             <Row label="WhatsApp" value={order.whatsApp} />
-            {order.contactPerson && <Row label="Контактное лицо" value={order.contactPerson} />}
+            {order.contactPerson ? <Row label="Контактное лицо" value={order.contactPerson} /> : null}
             <Row label="Город" value={order.city} />
             <Row label="Адрес" value={order.address} />
           </Card>
 
-          {/* Детали заказа */}
+          {/* Заказ */}
           <SectionTitle>Заказ</SectionTitle>
           <Card>
             {order.orderName ? <Row label="Название заказа" value={order.orderName} /> : null}
-            <Row label="Модель" value={order.garmentModel} />
             <Row label="Вид заказа" value={order.orderType} />
-            <Row label="Количество" value={order.quantity ? `${order.quantity} шт.` : "—"} />
+            {!isPaired ? <Row label="Модель" value={order.garmentModel} /> : null}
             <Row label="Цвет ниток" value={order.embroideryColor} />
             <Row label="Цвет ткани" value={order.fabricColor} />
             <Row label="Тип ткани" value={order.fabricType} />
@@ -77,87 +122,67 @@ export const OrderDetailModal = ({
             <Row label="Доставка" value={order.deliveryMethod} />
           </Card>
 
-          {/* Ornaments — per-garment or flat */}
-          <SectionTitle>Орнаменты</SectionTitle>
-          {hasPerGarmentOrnaments ? (
-            // Per-garment: one card per item
-            order.garmentOrnaments!.map((g, i) => (
-              <Card key={i}>
-                {/* Garment index badge */}
-                <View className="flex-row items-center mb-3">
-                  <View
-                    style={{
-                      backgroundColor: "#C5A059",
-                      borderRadius: 8,
-                      paddingHorizontal: 10,
-                      paddingVertical: 3,
-                      marginRight: 8,
-                    }}
-                  >
-                    <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>
-                      #{i + 1}
-                    </Text>
+          {/* Paired persons */}
+          {isPaired && order.person1 && order.person2 ? (
+            <>
+              <SectionTitle>Изделия</SectionTitle>
+              <PersonCard person={order.person1} label="Человек 1" index={0} />
+              <PersonCard person={order.person2} label="Человек 2" index={1} />
+            </>
+          ) : hasPerGarmentOrnaments ? (
+            <>
+              <SectionTitle>Орнаменты</SectionTitle>
+              {order.garmentOrnaments!.map((g, i) => (
+                <Card key={i}>
+                  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+                    <View style={{
+                      backgroundColor: KU_GOLD, borderRadius: 8,
+                      paddingHorizontal: 10, paddingVertical: 3, marginRight: 8,
+                    }}>
+                      <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>#{i + 1}</Text>
+                    </View>
+                    <Text className="font-semibold text-gray-700">Изделие {i + 1}</Text>
                   </View>
-                  <Text className="font-semibold text-gray-700">Изделие {i + 1}</Text>
-                </View>
-                <Row
-                  label="Орнамент"
-                  value={g.ornamentType?.join(", ") || "—"}
-                />
-                <Row
-                  label="Расположение"
-                  value={g.ornamentPosition?.join(", ") || "—"}
-                />
-              </Card>
-            ))
+                  <Row label="Орнамент" value={g.ornamentType?.join(", ") || "—"} />
+                  <Row label="Расположение" value={g.ornamentPosition?.join(", ") || "—"} />
+                </Card>
+              ))}
+            </>
           ) : (
-            // Legacy flat ornament fields
-            <Card>
-              <Row
-                label="Орнамент"
-                value={order.ornamentType?.join(", ") || "—"}
-              />
-              <Row
-                label="Расположение"
-                value={order.ornamentPosition?.join(", ") || "—"}
-              />
-            </Card>
+            <>
+              <SectionTitle>Орнаменты</SectionTitle>
+              <Card>
+                <Row label="Орнамент" value={order.ornamentType?.join(", ") || "—"} />
+                <Row label="Расположение" value={order.ornamentPosition?.join(", ") || "—"} />
+              </Card>
+            </>
           )}
 
-          {/* Мерки */}
-          <SectionTitle>Мерки (см)</SectionTitle>
-          <Card>
-            <Row label="Рост" value={order.measurements?.height} />
-            <Row label="Обхват груди (Ог)" value={order.measurements?.chest} />
-            <Row label="Обхват талии (От)" value={order.measurements?.waist} />
-            <Row label="Обхват бедер (Об)" value={order.measurements?.hips} />
-            <Row label="Высота груди (Вг)" value={order.measurements?.chestHeight} />
-            <Row label="Ширина спинки (Шсп)" value={order.measurements?.backWidth} />
-            <Row label="Длина полочки (Дтп)" value={order.measurements?.frontLength} />
-            <Row label="Длина спинки (Дтс)" value={order.measurements?.backLength} />
-            <Row label="Длина плеча" value={order.measurements?.shoulderLength} />
-            <Row label="Обхват шеи" value={order.measurements?.neckCircumference} />
-            <Row label="Обхват руки" value={order.measurements?.armCircumference} />
-            <Row label="Длина рукава" value={order.measurements?.sleeveLength} />
-            <Row label="Длина юбки" value={order.measurements?.skirtLength} />
-            <Row label="Длина изделия" value={order.measurements?.garmentLength} />
-          </Card>
+          {/* Standard measurements (non-paired) */}
+          {!isPaired && (
+            <>
+              <SectionTitle>Мерки (см)</SectionTitle>
+              <Card>
+                {MEASUREMENT_LABELS.map(({ key, label }) => (
+                  <Row key={key} label={label} value={order.measurements?.[key]} />
+                ))}
+              </Card>
+            </>
+          )}
 
-          {/* Комментарий */}
+          {/* Comment */}
           {order.comment ? (
             <>
               <SectionTitle>Комментарий клиента</SectionTitle>
               <Card>
                 <View style={{ paddingVertical: 12 }}>
-                  <Text style={{ color: "#374151", fontSize: 14, lineHeight: 20 }}>
-                    {order.comment}
-                  </Text>
+                  <Text style={{ color: "#374151", fontSize: 14, lineHeight: 20 }}>{order.comment}</Text>
                 </View>
               </Card>
             </>
           ) : null}
 
-          {/* Фото-референс */}
+          {/* Reference photo */}
           {order.referencePhotoUrl ? (
             <>
               <SectionTitle>Фото модели (образец)</SectionTitle>
@@ -173,7 +198,7 @@ export const OrderDetailModal = ({
             </>
           ) : null}
 
-          {/* Оплата */}
+          {/* Payment */}
           <SectionTitle>Оплата</SectionTitle>
           <Card>
             <Row label="Способ оплаты" value={order.paymentMethod} />
@@ -191,14 +216,14 @@ export const OrderDetailModal = ({
                 onPaymentChange={async (flags) => {
                   await updateOrderPayment(order.id, {
                     ...(flags.deposit !== undefined && { depositPaid: flags.deposit }),
-                    ...(flags.full !== undefined && { fullPaid: flags.full }),
+                    ...(flags.full    !== undefined && { fullPaid:    flags.full }),
                   });
                 }}
               />
             </View>
           </Card>
 
-          {/* Статус */}
+          {/* Status */}
           <SectionTitle>Статус производства</SectionTitle>
           <Card>
             <Text className="text-[10px] text-gray-400 mb-3 uppercase tracking-tighter">
@@ -206,26 +231,15 @@ export const OrderDetailModal = ({
             </Text>
             <View className="flex-row flex-wrap">
               {STATUS_ORDER.map((s) => {
-                const isFinancialStatus =
-                  s === "Предоплата оплачена" || s === "Оплачено полностью";
-                if (isFinancialStatus) return null;
-
+                if (s === "Предоплата оплачена" || s === "Оплачено полностью") return null;
                 const active = selected === s;
                 return (
                   <Pressable
                     key={s}
                     onPress={() => setSelected(s)}
-                    className={`mr-2 mb-2 px-3 py-2 rounded-lg border ${
-                      active ? "border-[#C5A059] bg-[#C5A059]/10" : "border-gray-100 bg-white"
-                    }`}
+                    className={`mr-2 mb-2 px-3 py-2 rounded-lg border ${active ? "border-[#C5A059] bg-[#C5A059]/10" : "border-gray-100 bg-white"}`}
                   >
-                    <Text
-                      className={`text-xs font-medium ${
-                        active ? "text-[#C5A059]" : "text-gray-500"
-                      }`}
-                    >
-                      {s}
-                    </Text>
+                    <Text className={`text-xs font-medium ${active ? "text-[#C5A059]" : "text-gray-500"}`}>{s}</Text>
                   </Pressable>
                 );
               })}

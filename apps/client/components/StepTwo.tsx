@@ -1,13 +1,11 @@
 import { View, Text, Pressable, Image, ActivityIndicator } from "react-native";
 import { Control, Controller, useWatch } from "react-hook-form";
 import { Camera } from "lucide-react-native";
-// UI Components
 import { InputField } from "./ui/InputField";
 import { SectionLabel } from "./ui/SectionLabel";
 import { ChipSelector } from "./ui/ChipSelector";
 import { OrnamentCarousel } from "./ui/OrnamentCarousel";
 import { MultiChipSelector } from "./ui/MultiChipSelector";
-// Constants
 import { GARMENT_MODELS_T, ORNAMENT_POSITIONS_T } from "@/constants/translations";
 import { KU_GOLD } from "@/constants/orderConstants";
 
@@ -23,41 +21,88 @@ interface StepTwoProps {
   setReferencePhoto: (uri: string | null) => void;
 }
 
-export const StepTwo = ({
-  t,
+/** Ornament + position selectors for a single person, using direct value/onChange */
+const PersonOrnamentBlock = ({
   control,
-  lang,
+  personPrefix,
   ornamentList,
   getOrnamentImage,
-  photoUploading,
-  referencePhoto,
-  pickPhoto,
-  setReferencePhoto,
+  positions,
+  t,
+}: {
+  control: Control<any>;
+  personPrefix: "p1" | "p2";
+  ornamentList: any[];
+  getOrnamentImage: (type: string) => any;
+  positions: string[];
+  t: any;
+}) => (
+  <View>
+    <Text style={{ fontSize: 12, color: "#6B7280", marginBottom: 6 }}>{t.ornamentType}</Text>
+    <Controller
+      control={control}
+      name={`${personPrefix}OrnamentType` as any}
+      defaultValue={[]}
+      render={({ field: { onChange, value } }) => (
+        <OrnamentCarousel
+          value={value}
+          onChange={onChange}
+          ornamentList={ornamentList}
+          getOrnamentImage={getOrnamentImage}
+        />
+      )}
+    />
+    <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 10, marginBottom: 6 }}>{t.ornamentPosition}</Text>
+    <Controller
+      control={control}
+      name={`${personPrefix}OrnamentPosition` as any}
+      defaultValue={[]}
+      render={({ field: { onChange, value } }) => (
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+          {positions.map((opt: string) => {
+            const isSelected = (value ?? []).includes(opt);
+            return (
+              <Pressable
+                key={opt}
+                onPress={() => {
+                  if (isSelected) onChange((value ?? []).filter((v: string) => v !== opt));
+                  else onChange([...(value ?? []), opt]);
+                }}
+                style={{
+                  marginRight: 8, marginBottom: 8,
+                  paddingHorizontal: 14, paddingVertical: 8,
+                  borderRadius: 12, borderWidth: 1,
+                  borderColor: isSelected ? KU_GOLD : "#F3F4F6",
+                  backgroundColor: isSelected ? `${KU_GOLD}1A` : "white",
+                }}
+              >
+                <Text style={{ color: isSelected ? KU_GOLD : "#9CA3AF", fontWeight: isSelected ? "700" : "400" }}>
+                  {opt}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    />
+  </View>
+);
+
+export const StepTwo = ({
+  t, control, lang,
+  ornamentList, getOrnamentImage,
+  photoUploading, referencePhoto, pickPhoto, setReferencePhoto,
 }: StepTwoProps) => {
-  const currentGarmentModels = lang === "kaz" ? GARMENT_MODELS_T.kaz : GARMENT_MODELS_T.rus;
+  const currentGarmentModels   = lang === "kaz" ? GARMENT_MODELS_T.kaz   : GARMENT_MODELS_T.rus;
   const currentOrnamentPositions = lang === "kaz" ? ORNAMENT_POSITIONS_T.kaz : ORNAMENT_POSITIONS_T.rus;
 
-  // Watch quantity to show per-garment ornament sections
-  const rawQuantity = useWatch({ control, name: "quantity", defaultValue: "1" });
-  const quantity = Math.max(1, parseInt(rawQuantity) || 1);
-  const isMultiple = quantity > 1;
+  const orderType = useWatch({ control, name: "orderType", defaultValue: "Стандартный" });
+  const isPaired  = orderType === "Парный";
 
   return (
     <View>
       <Text className="text-3xl font-bold mb-1">{t.newOrder}</Text>
       <Text className="text-gray-400 mb-6">{t.step2title}</Text>
-
-      <SectionLabel>{t.garmentModel}</SectionLabel>
-      <ChipSelector control={control} name="garmentModel" options={currentGarmentModels} />
-
-      <SectionLabel>{t.quantity}</SectionLabel>
-      <InputField
-        control={control}
-        name="quantity"
-        placeholder="1"
-        keyboardType="numeric"
-        rules={{ required: t.errorRequired, min: { value: 1, message: t.errorQty } }}
-      />
 
       <SectionLabel>{t.fabricColor}</SectionLabel>
       <InputField control={control} name="fabricColor" placeholder={t.fabricColor} />
@@ -65,118 +110,60 @@ export const StepTwo = ({
       <SectionLabel>{t.fabricType}</SectionLabel>
       <InputField control={control} name="fabricType" placeholder={t.fabricType} />
 
-      {/* ── Ornament selection ── */}
-      {isMultiple ? (
-        // Per-garment ornament selection
+      {isPaired ? (
+        /* ── PAIRED: two person blocks ── */
         <View>
-          {Array.from({ length: quantity }).map((_, i) => (
+          {(["p1", "p2"] as const).map((prefix, idx) => (
             <View
-              key={i}
+              key={prefix}
               style={{
-                borderWidth: 1,
-                borderColor: "#E5E7EB",
-                borderRadius: 16,
-                padding: 14,
-                marginBottom: 14,
+                borderWidth: 1, borderColor: "#E5E7EB",
+                borderRadius: 16, padding: 14, marginBottom: 16,
               }}
             >
-              {/* Garment item header */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 10,
-                }}
-              >
-                <View
-                  style={{
-                    backgroundColor: KU_GOLD,
-                    borderRadius: 8,
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    marginRight: 8,
-                  }}
-                >
+              {/* Person header */}
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                <View style={{
+                  backgroundColor: KU_GOLD, borderRadius: 8,
+                  paddingHorizontal: 10, paddingVertical: 4, marginRight: 8,
+                }}>
                   <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>
-                    #{i + 1}
+                    {idx + 1}
                   </Text>
                 </View>
-                <Text style={{ fontWeight: "600", color: "#374151" }}>
-                  {lang === "kaz" ? `${i + 1}-ші бұйым` : `Изделие ${i + 1}`}
+                <Text style={{ fontWeight: "600", color: "#374151", fontSize: 15 }}>
+                  {lang === "kaz"
+                    ? (idx === 0 ? "1-ші адам" : "2-ші адам")
+                    : (idx === 0 ? "Человек 1" : "Человек 2")}
                 </Text>
               </View>
 
-              {/* Ornament type for this garment */}
-              <Text style={{ fontSize: 12, color: "#6B7280", marginBottom: 6 }}>
-                {t.ornamentType}
-              </Text>
-              <Controller
+              {/* Garment model */}
+              <Text style={{ fontSize: 12, color: "#6B7280", marginBottom: 6 }}>{t.garmentModel}</Text>
+              <ChipSelector
                 control={control}
-                name={`garmentOrnaments.${i}.ornamentType` as any}
-                defaultValue={[]}
-                render={({ field: { onChange, value } }) => (
-                  <OrnamentCarousel
-                    value={value}
-                    onChange={onChange}
-                    ornamentList={ornamentList}
-                    getOrnamentImage={getOrnamentImage}
-                  />
-                )}
+                name={`${prefix}GarmentModel`}
+                options={currentGarmentModels}
               />
 
-              {/* Ornament position for this garment */}
-              <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 10, marginBottom: 6 }}>
-                {t.ornamentPosition}
-              </Text>
-              <Controller
+              {/* Ornaments */}
+              <PersonOrnamentBlock
                 control={control}
-                name={`garmentOrnaments.${i}.ornamentPosition` as any}
-                defaultValue={[]}
-                render={({ field: { onChange, value } }) => (
-                  <View className="flex-row flex-wrap">
-                    {currentOrnamentPositions.map((opt: string) => {
-                      const isSelected = (value ?? []).includes(opt);
-                      return (
-                        <Pressable
-                          key={opt}
-                          onPress={() => {
-                            if (isSelected) {
-                              onChange((value ?? []).filter((v: string) => v !== opt));
-                            } else {
-                              onChange([...(value ?? []), opt]);
-                            }
-                          }}
-                          style={{
-                            marginRight: 8,
-                            marginBottom: 8,
-                            paddingHorizontal: 14,
-                            paddingVertical: 8,
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: isSelected ? KU_GOLD : "#F3F4F6",
-                            backgroundColor: isSelected ? `${KU_GOLD}1A` : "white",
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: isSelected ? KU_GOLD : "#9CA3AF",
-                              fontWeight: isSelected ? "700" : "400",
-                            }}
-                          >
-                            {opt}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                )}
+                personPrefix={prefix}
+                ornamentList={ornamentList}
+                getOrnamentImage={getOrnamentImage}
+                positions={currentOrnamentPositions}
+                t={t}
               />
             </View>
           ))}
         </View>
       ) : (
-        // Single garment — original flat selectors
+        /* ── STANDARD: single garment + ornaments ── */
         <View>
+          <SectionLabel>{t.garmentModel}</SectionLabel>
+          <ChipSelector control={control} name="garmentModel" options={currentGarmentModels} />
+
           <SectionLabel>{t.ornamentType}</SectionLabel>
           <OrnamentCarousel
             control={control}
@@ -184,6 +171,7 @@ export const StepTwo = ({
             ornamentList={ornamentList}
             getOrnamentImage={getOrnamentImage}
           />
+
           <SectionLabel>{t.ornamentPosition}</SectionLabel>
           <MultiChipSelector
             control={control}
