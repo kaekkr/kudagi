@@ -8,6 +8,7 @@ import { OrnamentCarousel } from "./ui/OrnamentCarousel";
 import { MultiChipSelector } from "./ui/MultiChipSelector";
 import { GARMENT_MODELS_T, ORNAMENT_POSITIONS_T } from "@/constants/translations";
 import { KU_GOLD } from "@/constants/orderConstants";
+import { PairedOrnamentBlock } from "./PairedOrnamentBlock";
 
 interface StepTwoProps {
   t: any;
@@ -20,176 +21,6 @@ interface StepTwoProps {
   pickPhoto: () => Promise<void>;
   setReferencePhoto: (uri: string | null) => void;
 }
-
-/** { type: string, positions: string[] }[] — one entry per selected ornament type */
-type OrnamentEntry = { type: string; positions: string[] };
-
-/**
- * Paired ornament block.
- * Carousel to pick ornament types → summary table below each selected type
- * showing position buttons. Tap a position → adds/removes it for that type only.
- */
-const PairedOrnamentBlock = ({
-  value,
-  onChange,
-  ornamentList,
-  getOrnamentImage,
-  positions,
-  t,
-}: {
-  value: OrnamentEntry[];
-  onChange: (val: OrnamentEntry[]) => void;
-  ornamentList: string[];
-  getOrnamentImage: (type: string) => any;
-  positions: string[];
-  t: any;
-}) => {
-  const selectedTypes = value.map((e) => e.type);
-
-  const handleTypeToggle = (type: string) => {
-    const exists = value.find((e) => e.type === type);
-    if (exists) {
-      // Deselect — remove the whole entry
-      onChange(value.filter((e) => e.type !== type));
-    } else {
-      // Select — add entry with empty positions
-      onChange([...value, { type, positions: [] }]);
-    }
-  };
-
-  const handlePositionToggle = (type: string, position: string) => {
-    onChange(
-      value.map((e) => {
-        if (e.type !== type) return e;
-        const hasPos = e.positions.includes(position);
-        return {
-          ...e,
-          positions: hasPos
-            ? e.positions.filter((p) => p !== position)
-            : [...e.positions, position],
-        };
-      })
-    );
-  };
-
-  return (
-    <View>
-      {/* ── Ornament type carousel ── */}
-      <Text style={{ fontSize: 12, color: "#6B7280", marginBottom: 6 }}>{t.ornamentType}</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 4 }}
-        style={{ paddingVertical: 8 }}
-        nestedScrollEnabled
-        directionalLockEnabled
-        keyboardShouldPersistTaps="handled"
-      >
-        {ornamentList.map((type) => {
-          const isSelected = selectedTypes.includes(type);
-          return (
-            <Pressable
-              key={type}
-              onPress={() => handleTypeToggle(type)}
-              delayPressIn={50}
-              style={{ marginRight: 14, alignItems: "center", width: 88 }}
-            >
-              <View style={{
-                width: 88, height: 88, borderRadius: 16,
-                overflow: "hidden", borderWidth: 2, marginBottom: 6,
-                borderColor: isSelected ? KU_GOLD : "#F3F4F6",
-              }}>
-                <Image
-                  source={getOrnamentImage(type)}
-                  style={{ width: "100%", height: "100%" }}
-                  resizeMode="cover"
-                />
-                {isSelected && (
-                  <View style={{
-                    position: "absolute", top: 6, right: 6,
-                    backgroundColor: KU_GOLD, borderRadius: 10,
-                    width: 20, height: 20, alignItems: "center", justifyContent: "center",
-                  }}>
-                    <Text style={{ color: "white", fontSize: 10 }}>✓</Text>
-                  </View>
-                )}
-              </View>
-              <Text numberOfLines={1} style={{
-                fontSize: 11, textAlign: "center", width: "100%",
-                color: isSelected ? KU_GOLD : "#9CA3AF",
-                fontWeight: isSelected ? "700" : "400",
-              }}>
-                {type}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {/* ── Summary table: one row per selected type ── */}
-      {value.length > 0 && (
-        <View style={{ marginTop: 12, gap: 8 }}>
-          {value.map((entry) => (
-            <View
-              key={entry.type}
-              style={{
-                backgroundColor: "#F9FAFB",
-                borderRadius: 12,
-                padding: 10,
-                borderWidth: 1,
-                borderColor: "#E5E7EB",
-              }}
-            >
-              {/* Type label */}
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-                <View style={{
-                  backgroundColor: KU_GOLD, borderRadius: 6,
-                  paddingHorizontal: 8, paddingVertical: 3, marginRight: 8,
-                }}>
-                  <Text style={{ color: "white", fontSize: 11, fontWeight: "700" }}>
-                    {entry.type}
-                  </Text>
-                </View>
-                {entry.positions.length === 0 && (
-                  <Text style={{ fontSize: 11, color: "#D1D5DB" }}>
-                    {t.ornamentPosition}...
-                  </Text>
-                )}
-              </View>
-
-              {/* Position buttons — tap to add, tap again to remove */}
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-                {positions.map((pos) => {
-                  const active = entry.positions.includes(pos);
-                  return (
-                    <Pressable
-                      key={pos}
-                      onPress={() => handlePositionToggle(entry.type, pos)}
-                      style={{
-                        paddingHorizontal: 12, paddingVertical: 6,
-                        borderRadius: 20, borderWidth: 1,
-                        borderColor: active ? KU_GOLD : "#E5E7EB",
-                        backgroundColor: active ? `${KU_GOLD}18` : "white",
-                      }}
-                    >
-                      <Text style={{
-                        fontSize: 12,
-                        color: active ? KU_GOLD : "#6B7280",
-                        fontWeight: active ? "600" : "400",
-                      }}>
-                        {active ? `${pos} ×` : pos}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-};
 
 /** Ornament block for a single person in paired order */
 const PersonOrnamentSection = ({
@@ -278,12 +109,12 @@ export const StepTwo = ({
 
               {/* Ornaments with inline position picker */}
               <PersonOrnamentSection
-                control={control}
-                personPrefix={prefix}
-                ornamentList={ornamentList}
-                getOrnamentImage={getOrnamentImage}
-                positions={currentOrnamentPositions}
-                t={t}
+                        control={control}
+                        personPrefix={prefix}
+                        ornamentList={ornamentList}
+                        getOrnamentImage={getOrnamentImage}
+                        positions={currentOrnamentPositions}
+                        t={t}
               />
             </View>
           ))}
