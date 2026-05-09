@@ -29,17 +29,28 @@ export interface OrderMeasurements {
   neckCircumference: number;
 }
 
+/**
+ * One ornament type with its selected positions.
+ * Used in paired orders so each ornament type has its own position list.
+ */
+export interface OrnamentEntry {
+  type: string;
+  positions: string[];
+}
+
 /** Full config for one person in a paired order */
 export interface PairedPerson {
   garmentModel: string;
-  ornamentType: string[];
-  ornamentPosition: string[];
+  /**
+   * Each selected ornament type paired with its positions.
+   * e.g. [{ type: "Тип 1", positions: ["Ворот", "Рукав"] }, ...]
+   */
+  ornaments: OrnamentEntry[];
   measurements: OrderMeasurements;
 }
 
 export interface KuDagiOrder {
   id: string;
-  /** Client-defined name, e.g. "Куртка для сына". Used with phone for duplicate check. */
   orderName?: string;
   clientName: string;
   phone: string;
@@ -47,14 +58,12 @@ export interface KuDagiOrder {
   city?: string;
   address?: string;
   orderType: string;
-  /** Used for standard/non-paired orders */
   garmentModel?: string;
   fabricColor?: string;
   fabricType?: string;
   ornamentType: string[];
   ornamentPosition: string[];
   garmentOrnaments?: GarmentOrnament[];
-  /** Populated only when orderType === "Парный" */
   person1?: PairedPerson;
   person2?: PairedPerson;
   embroideryColor: string;
@@ -65,7 +74,6 @@ export interface KuDagiOrder {
   comment?: string;
   referencePhotoUrl?: string;
   consentedToData?: boolean;
-  /** Measurements for standard orders (person1.measurements used for paired) */
   measurements: OrderMeasurements;
   totalPrice: number;
   depositPaid: boolean;

@@ -39,8 +39,28 @@ const PersonCard = ({ person, label, index }: { person: PairedPerson; label: str
       <Text style={{ fontWeight: "600", color: "#374151", fontSize: 15 }}>{label}</Text>
     </View>
     <Row label="Модель" value={person.garmentModel} />
-    <Row label="Орнамент" value={person.ornamentType?.join(", ") || "—"} />
-    <Row label="Расположение" value={person.ornamentPosition?.join(", ") || "—"} />
+    <View style={{ marginTop: 4 }}>
+      {person.ornaments?.length ? (
+        person.ornaments.map((ornament, idx) => (
+          <View
+            key={`${ornament.type}-${idx}`}
+            style={{
+              paddingVertical: 8,
+              borderBottomWidth: idx !== person.ornaments.length - 1 ? 1 : 0,
+              borderBottomColor: "#F3F4F6",
+            }}
+          >
+            <Row label="Орнамент" value={ornament.type} />
+            <Row
+              label="Расположение"
+              value={ornament.positions?.join(", ") || "—"}
+            />
+          </View>
+        ))
+      ) : (
+        <Row label="Орнаменты" value="—" />
+      )}
+    </View>
     <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: "#F9FAFB", paddingTop: 8 }}>
       <Text style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>
         Мерки (см)

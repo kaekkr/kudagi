@@ -1,25 +1,4 @@
-import { KuDagiOrder, OrderMeasurements, PairedPerson } from "@kudagi/core";
-
-function parseMeasurementsFromForm(data: any, prefix = ""): OrderMeasurements {
-  const p = prefix ? `${prefix}.` : "";
-  const get = (key: string) => parseFloat(data[`${p}${key}`] ?? data[key] ?? "0") || 0;
-  return {
-    height:            get("height"),
-    chest:             get("chest"),
-    waist:             get("waist"),
-    hips:              get("hips"),
-    chestHeight:       get("chestHeight"),
-    backWidth:         get("backWidth"),
-    frontLength:       get("frontLength"),
-    backLength:        get("backLength"),
-    shoulderLength:    get("shoulderLength"),
-    skirtLength:       get("skirtLength"),
-    garmentLength:     get("garmentLength"),
-    armCircumference:  get("armCircumference"),
-    sleeveLength:      get("sleeveLength"),
-    neckCircumference: get("neckCircumference"),
-  };
-}
+import { KuDagiOrder, OrnamentEntry, OrderMeasurements, PairedPerson } from "@kudagi/core";
 
 function parsePairedMeasurements(m: any): OrderMeasurements {
   return {
@@ -40,21 +19,38 @@ function parsePairedMeasurements(m: any): OrderMeasurements {
   };
 }
 
+function parseStandardMeasurements(data: any): OrderMeasurements {
+  return {
+    height:            parseFloat(data.height)            || 0,
+    chest:             parseFloat(data.chest)             || 0,
+    waist:             parseFloat(data.waist)             || 0,
+    hips:              parseFloat(data.hips)              || 0,
+    chestHeight:       parseFloat(data.chestHeight)       || 0,
+    backWidth:         parseFloat(data.backWidth)         || 0,
+    frontLength:       parseFloat(data.frontLength)       || 0,
+    backLength:        parseFloat(data.backLength)        || 0,
+    shoulderLength:    parseFloat(data.shoulderLength)    || 0,
+    skirtLength:       parseFloat(data.skirtLength)       || 0,
+    garmentLength:     parseFloat(data.garmentLength)     || 0,
+    armCircumference:  parseFloat(data.armCircumference)  || 0,
+    sleeveLength:      parseFloat(data.sleeveLength)      || 0,
+    neckCircumference: parseFloat(data.neckCircumference) || 0,
+  };
+}
+
 export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagiOrder => {
   const isPaired = data.orderType === "Парный";
 
   const person1: PairedPerson | undefined = isPaired ? {
-    garmentModel:     data.p1GarmentModel ?? "Платье",
-    ornamentType:     data.p1OrnamentType ?? [],
-    ornamentPosition: data.p1OrnamentPosition ?? [],
-    measurements:     parsePairedMeasurements(data.p1Measurements),
+    garmentModel: data.p1GarmentModel ?? "Платье",
+    ornaments:    (data.p1Ornaments ?? []) as OrnamentEntry[],
+    measurements: parsePairedMeasurements(data.p1Measurements),
   } : undefined;
 
   const person2: PairedPerson | undefined = isPaired ? {
-    garmentModel:     data.p2GarmentModel ?? "Платье",
-    ornamentType:     data.p2OrnamentType ?? [],
-    ornamentPosition: data.p2OrnamentPosition ?? [],
-    measurements:     parsePairedMeasurements(data.p2Measurements),
+    garmentModel: data.p2GarmentModel ?? "Платье",
+    ornaments:    (data.p2Ornaments ?? []) as OrnamentEntry[],
+    measurements: parsePairedMeasurements(data.p2Measurements),
   } : undefined;
 
   return {
@@ -70,7 +66,7 @@ export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagi
     garmentModel:     isPaired ? "" : data.garmentModel,
     fabricColor:      data.fabricColor?.trim()      || "",
     fabricType:       data.fabricType?.trim()       || "",
-    ornamentType:     isPaired ? [] : (data.ornamentType ?? []),
+    ornamentType:     isPaired ? [] : (data.ornamentType  ?? []),
     ornamentPosition: isPaired ? [] : (data.ornamentPosition ?? []),
     garmentOrnaments: [],
     person1,
@@ -83,8 +79,8 @@ export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagi
     referencePhotoUrl:referencePhoto                ?? "",
     consentedToData:  data.consentedToData,
     measurements:     isPaired
-      ? parsePairedMeasurements(data.p1Measurements) // fallback for admin display
-      : parseMeasurementsFromForm(data),
+      ? parsePairedMeasurements(data.p1Measurements)
+      : parseStandardMeasurements(data),
     totalPrice:       0,
     depositPaid:      false,
     fullPaid:         false,

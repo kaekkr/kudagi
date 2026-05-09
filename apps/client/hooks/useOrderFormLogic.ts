@@ -23,6 +23,7 @@ export const DEFAULT_VALUES = {
   address: "",
   contactPerson: "",
   orderType: "Стандартный",
+  // Standard order
   garmentModel: "Платье",
   fabricColor: "",
   fabricType: "",
@@ -30,14 +31,16 @@ export const DEFAULT_VALUES = {
   ornamentPosition: [] as string[],
   embroideryColor: "",
   colorConfirmed: false,
+  // Paired — person 1
   p1GarmentModel: "Платье",
-  p1OrnamentType: [] as string[],
-  p1OrnamentPosition: [] as string[],
+  /** Array of { type: string, positions: string[] } */
+  p1Ornaments: [] as { type: string; positions: string[] }[],
   p1Measurements: { ...EMPTY_MEASUREMENTS },
+  // Paired — person 2
   p2GarmentModel: "Платье",
-  p2OrnamentType: [] as string[],
-  p2OrnamentPosition: [] as string[],
+  p2Ornaments: [] as { type: string; positions: string[] }[],
   p2Measurements: { ...EMPTY_MEASUREMENTS },
+  // Standard measurements (flat)
   ...EMPTY_MEASUREMENTS,
   measurementMethod: "самостоятельно",
   occasion: "Праздник",
@@ -80,8 +83,6 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
     defaultValues: DEFAULT_VALUES,
   });
 
-  // Store RHF stable functions in refs to avoid ESLint exhaustive-deps warnings.
-  // RHF guarantees these are stable across renders, but ESLint can't verify that.
   const resetRef = useRef(reset);
   const getValuesRef = useRef(getValues);
   const referencePhotoRef = useRef(referencePhoto);
@@ -89,7 +90,6 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
   useEffect(() => { getValuesRef.current = getValues; }, [getValues]);
   useEffect(() => { referencePhotoRef.current = referencePhoto; }, [referencePhoto]);
 
-  // Restore draft on mount — always start at step 1 to prevent accidental re-submit
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
       if (raw) {
@@ -101,18 +101,16 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
       }
       setHydrated(true);
     });
-  }, []); // intentionally empty — runs once on mount
+  }, []);
 
-  // Save draft when step changes
   useEffect(() => {
     if (!hydrated) return;
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
       savedValues: getValuesRef.current(),
       savedPhoto: referencePhotoRef.current,
     }));
-  }, [step, hydrated]); // getValues/referencePhoto accessed via ref — no dep warning
+  }, [step, hydrated]);
 
-  // Save draft when form values change
   useEffect(() => {
     if (!hydrated) return;
     const subscription = watch((values) => {
@@ -123,7 +121,7 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
       }));
     });
     return () => subscription.unsubscribe();
-  }, [watch, hydrated]); // referencePhoto accessed via ref
+  }, [watch, hydrated]);
 
   const handleNext = async () => {
     const valid = await trigger(STEP_FIELDS[step] as any);

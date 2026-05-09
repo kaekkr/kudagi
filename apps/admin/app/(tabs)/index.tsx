@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,7 +6,8 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { useOrderStore, KuDagiOrder, OrderStatus } from "@kudagi/core";
+import { useOrderStore } from "../../store/orderStore";
+import { KuDagiOrder, OrderStatus } from "../../types/order"
 import { FilterBar } from "@/components/ui/FilterBar";
 import { OrderCard } from "@/components/OrderCard";
 import { OrderDetailModal } from "@/components/OrderDetailModal";
@@ -25,7 +26,20 @@ export default function AdminOrderDashboard() {
     setRefreshing(false);
   };
 
-  useEffect(() => { fetchOrders(); }, []);
+  const fetched = useRef(false);
+
+  useEffect(() => {
+    if (fetched.current) return;
+    fetched.current = true;
+
+    fetchOrders();
+  }, []);
+
+  const initialLoading = loading && orders.length === 0;
+
+  const selectedOrder = selected
+    ? orders.find((o) => o.id === selected.id) || selected
+    : null;
 
   const filtered = orders.filter((o) => {
     if (filter === "Все") return true;
@@ -41,7 +55,7 @@ export default function AdminOrderDashboard() {
       </View>
       <FilterBar active={filter} onChange={setFilter} />
 
-      {loading ? (
+      {initialLoading ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#C5A059" />
         </View>
@@ -72,9 +86,9 @@ export default function AdminOrderDashboard() {
         />
       )}
 
-      {selected && (
+      {selectedOrder && (
         <OrderDetailModal
-          order={selected}
+          order={selectedOrder}
           onClose={() => setSelected(null)}
         />
       )}

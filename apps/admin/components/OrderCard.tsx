@@ -7,7 +7,6 @@ import { STATUS_ORDER } from "@/constants/constants";
 import { KuDagiOrder } from "@kudagi/core";
 import { StatusBadge } from "./ui/StatusBadge";
 import { formatDate } from "@/utils/formatDate";
-import { Badge } from "./ui/Badge";
 import { PaymentBadge } from "./ui/PaymentBadge";
 
 export const OrderCard = ({
