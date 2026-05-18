@@ -6,7 +6,7 @@ import { SectionLabel } from "./ui/SectionLabel";
 import { ChipSelector } from "./ui/ChipSelector";
 import { OrnamentCarousel } from "./ui/OrnamentCarousel";
 import { MultiChipSelector } from "./ui/MultiChipSelector";
-import { GARMENT_MODELS_T, ORNAMENT_POSITIONS_T } from "@/constants/translations";
+import { GARMENT_MODELS_T, ORNAMENT_POSITIONS_T, ORDER_TYPES_T, ORDER_TYPE_VALUES } from "@/constants/translations";
 import { KU_GOLD } from "@/constants/orderConstants";
 import { PairedOrnamentBlock } from "./PairedOrnamentBlock";
 

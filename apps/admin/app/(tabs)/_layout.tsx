@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { ListChecks, Layers, Image } from "lucide-react-native";
+import { ListChecks, Layers, Image, DollarSign } from "lucide-react-native";
 import Header from "../../components/Header";
 
 export default function TabLayout() {
@@ -30,6 +30,13 @@ export default function TabLayout() {
         options={{
           title: "Виды заказов",
           tabBarIcon: ({ color }) => <Image color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="prices"
+        options={{
+          title: "Цены",
+          tabBarIcon: ({ color }) => <DollarSign color={color} size={24} />,
         }}
       />
     </Tabs>

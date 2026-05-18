@@ -1,4 +1,4 @@
-import { KuDagiOrder, OrderStatus, PairedPerson, useOrderStore } from "@kudagi/core";
+import { KuDagiOrder, OrderStatus, PairedPerson, useOrderStore, KU_GOLD } from "@kudagi/core";
 import { useState } from "react";
 import { Modal, Pressable, View, Text, ScrollView, Image } from "react-native";
 import { SectionTitle } from "./ui/SectionTitle";
@@ -24,8 +24,6 @@ const MEASUREMENT_LABELS: { key: keyof PairedPerson["measurements"]; label: stri
   { key: "skirtLength",       label: "Длина юбки" },
   { key: "garmentLength",     label: "Длина изделия" },
 ];
-
-const KU_GOLD = "#C5A059";
 
 const PersonCard = ({ person, label, index }: { person: PairedPerson; label: string; index: number }) => (
   <Card>

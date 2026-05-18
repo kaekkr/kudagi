@@ -14,6 +14,17 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, "node_modules"),
 ];
 
+// Force single instances of packages that use module-level singletons.
+// Without this, Metro resolves zustand/react from admin's local node_modules
+// for @kudagi/core, and from root node_modules for the app — two instances,
+// two separate stores, so useOrderStore() in the component never sees updates
+// written by fetchOrders() in the core package.
+config.resolver.extraNodeModules = {
+  zustand: path.resolve(workspaceRoot, "node_modules/zustand"),
+  react: path.resolve(workspaceRoot, "node_modules/react"),
+  "react-native": path.resolve(workspaceRoot, "node_modules/react-native"),
+};
+
 // Force CJS resolution — prevents Metro from picking ESM builds
 // that contain import.meta (e.g. zustand)
 config.resolver.unstable_enablePackageExports = false;

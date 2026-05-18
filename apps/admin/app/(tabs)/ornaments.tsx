@@ -11,15 +11,10 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Plus, Pencil, Trash2, Upload } from "lucide-react-native";
+import { db } from "@kudagi/core";
+import { uploadOrnamentImage, pickFileWeb } from "@/utils/storage";
 
-const SUPABASE_URL = "https://klvotqhinoapghxinrmy.supabase.co";
-const SUPABASE_KEY = "sb_publishable_OJn9yxGI168WN4T5jb7nSQ_G-GhJHFD";
-const BUCKET = "ornaments";
-
-const BASE_HEADERS = {
-  apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-};
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface Ornament {
   id: string;
@@ -28,73 +23,43 @@ interface Ornament {
   usedInOrders: boolean;
 }
 
-async function dbFetchOrnaments(): Promise<Ornament[]> {
-  const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/ornaments?order=created_at.asc&select=*`,
-    { headers: { ...BASE_HEADERS, "Content-Type": "application/json" } }
-  );
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.map((r: any) => ({
-    id: r.id,
-    name: r.name,
-    imageUrl: r.image_url ?? "",
+// ── API helpers ──────────────────────────────────────────────────────────────
+
+async function fetchOrnaments(): Promise<Ornament[]> {
+  const data = await db("/ornaments?order=created_at.asc&select=*").catch(() => []);
+  return (data ?? []).map((r: any) => ({
+    id:           r.id,
+    name:         r.name,
+    imageUrl:     r.image_url     ?? "",
     usedInOrders: r.used_in_orders ?? false,
   }));
 }
 
-async function dbSaveOrnament(o: Partial<Ornament> & { name: string; imageUrl: string }, isNew: boolean) {
+async function saveOrnament(
+  o: Partial<Ornament> & { name: string; imageUrl: string },
+  isNew: boolean
+): Promise<any> {
   if (isNew) {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/ornaments`, {
+    const data = await db("/ornaments", {
       method: "POST",
-      headers: { ...BASE_HEADERS, "Content-Type": "application/json", Prefer: "return=representation" },
+      headers: { Prefer: "return=representation" },
       body: JSON.stringify({ name: o.name, image_url: o.imageUrl, used_in_orders: false }),
     });
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
-    return data[0];
-  } else {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/ornaments?id=eq.${o.id}`, {
-      method: "PATCH",
-      headers: { ...BASE_HEADERS, "Content-Type": "application/json", Prefer: "return=minimal" },
-      body: JSON.stringify({ name: o.name, image_url: o.imageUrl }),
-    });
-    if (!res.ok) throw new Error(await res.text());
+    return data?.[0];
   }
-}
-
-async function dbDeleteOrnament(id: string) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/ornaments?id=eq.${id}`, {
-    method: "DELETE",
-    headers: BASE_HEADERS,
-  });
-  if (!res.ok) throw new Error(await res.text());
-}
-
-async function uploadToStorage(file: File, bucket: string): Promise<string> {
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 6)}.${ext}`;
-  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${bucket}/${fileName}`, {
-    method: "POST",
-    headers: { ...BASE_HEADERS, "Content-Type": file.type, "x-upsert": "true" },
-    body: file,
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${fileName}`;
-}
-
-function pickFile(): Promise<File | null> {
-  return new Promise((resolve) => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.onchange = (e: any) => resolve(e.target.files?.[0] ?? null);
-    input.oncancel = () => resolve(null);
-    input.click();
+  await db(`/ornaments?id=eq.${o.id}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify({ name: o.name, image_url: o.imageUrl }),
   });
 }
 
-// ── Modal ────────────────────────────────────────────────────────────────────
+async function deleteOrnament(id: string): Promise<void> {
+  await db(`/ornaments?id=eq.${id}`, { method: "DELETE" });
+}
+
+// ── OrnamentModal ────────────────────────────────────────────────────────────
+
 const OrnamentModal = ({
   ornament,
   onSave,
@@ -104,18 +69,17 @@ const OrnamentModal = ({
   onSave: (o: Ornament) => void;
   onClose: () => void;
 }) => {
-  const [name, setName] = useState(ornament?.name ?? "");
-  const [imageUrl, setImageUrl] = useState(ornament?.imageUrl ?? "");
+  const [name,      setName]      = useState(ornament?.name     ?? "");
+  const [imageUrl,  setImageUrl]  = useState(ornament?.imageUrl ?? "");
   const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [saving,    setSaving]    = useState(false);
 
   const handlePick = async () => {
-    const file = await pickFile();
+    const file = await pickFileWeb();
     if (!file) return;
     setUploading(true);
     try {
-      const url = await uploadToStorage(file, BUCKET);
-      setImageUrl(url);
+      setImageUrl(await uploadOrnamentImage(file));
     } catch (e: any) {
       Alert.alert("Ошибка", e.message);
     } finally {
@@ -125,14 +89,14 @@ const OrnamentModal = ({
 
   const handleSave = async () => {
     if (!name.trim()) { Alert.alert("Ошибка", "Введите название"); return; }
-    if (!imageUrl) { Alert.alert("Ошибка", "Загрузите изображение"); return; }
+    if (!imageUrl)    { Alert.alert("Ошибка", "Загрузите изображение"); return; }
     setSaving(true);
     try {
-      const isNew = !ornament?.id;
-      const result = await dbSaveOrnament({ id: ornament?.id, name: name.trim(), imageUrl }, isNew);
+      const isNew  = !ornament?.id;
+      const result = await saveOrnament({ id: ornament?.id, name: name.trim(), imageUrl }, isNew);
       onSave({
-        id: isNew ? result?.id ?? Date.now().toString() : ornament!.id!,
-        name: name.trim(),
+        id:           isNew ? (result?.id ?? Date.now().toString()) : ornament!.id!,
+        name:         name.trim(),
         imageUrl,
         usedInOrders: ornament?.usedInOrders ?? false,
       });
@@ -146,6 +110,7 @@ const OrnamentModal = ({
   return (
     <Modal visible animationType="slide" presentationStyle="formSheet">
       <View style={{ flex: 1, backgroundColor: "white", padding: 24 }}>
+        {/* Header */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <Text style={{ fontSize: 20, fontWeight: "700" }}>
             {ornament?.id ? "Редактировать" : "Добавить орнамент"}
@@ -155,6 +120,7 @@ const OrnamentModal = ({
           </Pressable>
         </View>
 
+        {/* Name */}
         <Text style={{ fontSize: 13, color: "#6B7280", marginBottom: 4 }}>Название</Text>
         <TextInput
           value={name}
@@ -164,6 +130,7 @@ const OrnamentModal = ({
           style={{ borderWidth: 1, borderColor: "#F3F4F6", borderRadius: 12, padding: 14, marginBottom: 20, fontSize: 15 }}
         />
 
+        {/* Image picker */}
         <Text style={{ fontSize: 13, color: "#6B7280", marginBottom: 8 }}>Изображение</Text>
         <Pressable
           onPress={handlePick}
@@ -198,6 +165,7 @@ const OrnamentModal = ({
           </Pressable>
         ) : null}
 
+        {/* Save button */}
         <Pressable
           onPress={handleSave}
           disabled={saving || uploading}
@@ -216,15 +184,16 @@ const OrnamentModal = ({
   );
 };
 
-// ── Main ─────────────────────────────────────────────────────────────────────
+// ── OrnamentsScreen ──────────────────────────────────────────────────────────
+
 export default function OrnamentsScreen() {
   const [ornaments, setOrnaments] = useState<Ornament[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Partial<Ornament> | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [editing,   setEditing]   = useState<Partial<Ornament> | null>(null);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    dbFetchOrnaments().then((data) => { setOrnaments(data); setLoading(false); });
+    fetchOrnaments().then((data) => { setOrnaments(data); setLoading(false); });
   }, []);
 
   const handleDelete = (o: Ornament) => {
@@ -238,9 +207,11 @@ export default function OrnamentsScreen() {
         text: "Удалить", style: "destructive",
         onPress: async () => {
           try {
-            await dbDeleteOrnament(o.id);
+            await deleteOrnament(o.id);
             setOrnaments((prev) => prev.filter((x) => x.id !== o.id));
-          } catch (e: any) { Alert.alert("Ошибка", e.message); }
+          } catch (e: any) {
+            Alert.alert("Ошибка", e.message);
+          }
         },
       },
     ]);
@@ -256,7 +227,11 @@ export default function OrnamentsScreen() {
   };
 
   if (loading) {
-    return <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><ActivityIndicator color="#C5A059" size="large" /></View>;
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color="#C5A059" size="large" />
+      </View>
+    );
   }
 
   return (
@@ -279,7 +254,11 @@ export default function OrnamentsScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={{ backgroundColor: "white", borderRadius: 16, marginBottom: 16, overflow: "hidden", width: "48%", shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4 }}>
+          <View style={{
+            backgroundColor: "white", borderRadius: 16, marginBottom: 16,
+            overflow: "hidden", width: "48%",
+            shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4,
+          }}>
             <View style={{ height: 120, backgroundColor: "#F9FAFB" }}>
               {item.imageUrl ? (
                 <Image source={{ uri: item.imageUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
@@ -289,24 +268,38 @@ export default function OrnamentsScreen() {
                 </View>
               )}
               {item.usedInOrders && (
-                <View style={{ position: "absolute", top: 6, right: 6, backgroundColor: "rgba(197,160,89,0.2)", borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 }}>
+                <View style={{
+                  position: "absolute", top: 6, right: 6,
+                  backgroundColor: "rgba(197,160,89,0.2)", borderRadius: 20,
+                  paddingHorizontal: 8, paddingVertical: 2,
+                }}>
                   <Text style={{ fontSize: 9, color: "#C5A059", fontWeight: "700" }}>В заказах</Text>
                 </View>
               )}
             </View>
+
             <View style={{ padding: 10 }}>
-              <Text style={{ fontWeight: "600", color: "#111827", marginBottom: 8 }} numberOfLines={1}>{item.name}</Text>
+              <Text style={{ fontWeight: "600", color: "#111827", marginBottom: 8 }} numberOfLines={1}>
+                {item.name}
+              </Text>
               <View style={{ flexDirection: "row" }}>
                 <Pressable
                   onPress={() => { setEditing(item); setShowModal(true); }}
-                  style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#F9FAFB", borderRadius: 10, paddingVertical: 7, marginRight: 6 }}
+                  style={{
+                    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+                    backgroundColor: "#F9FAFB", borderRadius: 10, paddingVertical: 7, marginRight: 6,
+                  }}
                 >
                   <Pencil size={13} color="#C5A059" />
                   <Text style={{ color: "#C5A059", fontSize: 12, fontWeight: "600", marginLeft: 4 }}>Изменить</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => handleDelete(item)}
-                  style={{ backgroundColor: item.usedInOrders ? "#F9FAFB" : "#FEF2F2", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, alignItems: "center", justifyContent: "center" }}
+                  style={{
+                    backgroundColor: item.usedInOrders ? "#F9FAFB" : "#FEF2F2",
+                    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
+                    alignItems: "center", justifyContent: "center",
+                  }}
                 >
                   <Trash2 size={13} color={item.usedInOrders ? "#D1D5DB" : "#EF4444"} />
                 </Pressable>
@@ -316,9 +309,14 @@ export default function OrnamentsScreen() {
         )}
       />
 
+      {/* FAB */}
       <Pressable
         onPress={() => { setEditing({}); setShowModal(true); }}
-        style={{ position: "absolute", bottom: 32, right: 24, backgroundColor: "#C5A059", width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center" }}
+        style={{
+          position: "absolute", bottom: 32, right: 24,
+          backgroundColor: "#C5A059", width: 56, height: 56,
+          borderRadius: 28, alignItems: "center", justifyContent: "center",
+        }}
       >
         <Plus size={26} color="white" />
       </Pressable>
