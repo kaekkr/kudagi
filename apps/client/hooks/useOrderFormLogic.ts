@@ -29,15 +29,18 @@ export const DEFAULT_VALUES = {
   fabricType: "",
   ornamentType: [] as string[],
   ornamentPosition: [] as string[],
+  ornamentPositionCustom: "",
   embroideryColor: "",
   colorConfirmed: false,
   // Paired — person 1
   p1GarmentModel: "Платье",
+  p1GarmentModelCustom: "",
   /** Array of { type: string, positions: string[] } */
   p1Ornaments: [] as { type: string; positions: string[] }[],
   p1Measurements: { ...EMPTY_MEASUREMENTS },
   // Paired — person 2
   p2GarmentModel: "Платье",
+  p2GarmentModelCustom: "",
   p2Ornaments: [] as { type: string; positions: string[] }[],
   p2Measurements: { ...EMPTY_MEASUREMENTS },
   // Standard measurements (flat)

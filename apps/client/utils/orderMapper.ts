@@ -38,17 +38,32 @@ function parseStandardMeasurements(data: any): OrderMeasurements {
   };
 }
 
+const OTHER_VALUES = ["Другое", "Басқа"];
+
+/** If the selected value is "Другое"/"Басқа" and a custom text exists, use the custom text */
+function resolveCustom(value: string | undefined, custom: string | undefined): string {
+  if (value && OTHER_VALUES.includes(value) && custom?.trim()) return custom.trim();
+  return value ?? "";
+}
+
+/** Replace "Другое"/"Басқа" in an array with the custom value if provided */
+function resolveCustomArray(arr: string[], custom: string | undefined): string[] {
+  return arr.map((v) =>
+    OTHER_VALUES.includes(v) && custom?.trim() ? custom.trim() : v
+  );
+}
+
 export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagiOrder => {
   const isPaired = data.orderType === "Парный";
 
   const person1: PairedPerson | undefined = isPaired ? {
-    garmentModel: data.p1GarmentModel ?? "Платье",
+    garmentModel: resolveCustom(data.p1GarmentModel ?? "Платье", data.p1GarmentModelCustom),
     ornaments:    (data.p1Ornaments ?? []) as OrnamentEntry[],
     measurements: parsePairedMeasurements(data.p1Measurements),
   } : undefined;
 
   const person2: PairedPerson | undefined = isPaired ? {
-    garmentModel: data.p2GarmentModel ?? "Платье",
+    garmentModel: resolveCustom(data.p2GarmentModel ?? "Платье", data.p2GarmentModelCustom),
     ornaments:    (data.p2Ornaments ?? []) as OrnamentEntry[],
     measurements: parsePairedMeasurements(data.p2Measurements),
   } : undefined;
@@ -63,11 +78,11 @@ export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagi
     address:          data.address?.trim()          || "",
     contactPerson:    data.contactPerson?.trim()    || "",
     orderType:        data.orderType,
-    garmentModel:     isPaired ? "" : data.garmentModel,
+    garmentModel:     isPaired ? "" : resolveCustom(data.garmentModel, data.garmentModelCustom),
     fabricColor:      data.fabricColor?.trim()      || "",
     fabricType:       data.fabricType?.trim()       || "",
-    ornamentType:     isPaired ? [] : (data.ornamentType  ?? []),
-    ornamentPosition: isPaired ? [] : (data.ornamentPosition ?? []),
+    ornamentType:     isPaired ? [] : (data.ornamentType ?? []),
+    ornamentPosition: isPaired ? [] : resolveCustomArray(data.ornamentPosition ?? [], data.ornamentPositionCustom),
     garmentOrnaments: [],
     person1,
     person2,

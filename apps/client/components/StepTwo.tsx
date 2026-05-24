@@ -65,6 +65,8 @@ export const StepTwo = ({
 
   const orderType = useWatch({ control, name: "orderType", defaultValue: "Стандартный" });
   const isPaired  = orderType === "Парный";
+  const ornamentSelected = useWatch({ control, name: "ornamentType", defaultValue: [] });
+  const hasOrnament = Array.isArray(ornamentSelected) && ornamentSelected.length > 0;
 
   return (
     <View>
@@ -105,7 +107,12 @@ export const StepTwo = ({
 
               {/* Garment model */}
               <Text style={{ fontSize: 12, color: "#6B7280", marginBottom: 6 }}>{t.garmentModel}</Text>
-              <ChipSelector control={control} name={`${prefix}GarmentModel`} options={currentGarmentModels} />
+              <ChipSelector
+                control={control}
+                name={`${prefix}GarmentModel`}
+                options={currentGarmentModels}
+                allowCustom
+              />
 
               {/* Ornaments with inline position picker */}
               <PersonOrnamentSection
@@ -123,7 +130,12 @@ export const StepTwo = ({
         /* ── STANDARD ── */
         <View>
           <SectionLabel>{t.garmentModel}</SectionLabel>
-          <ChipSelector control={control} name="garmentModel" options={currentGarmentModels} />
+          <ChipSelector
+            control={control}
+            name="garmentModel"
+            options={currentGarmentModels}
+            allowCustom
+          />
 
           <SectionLabel>{t.ornamentType}</SectionLabel>
           <OrnamentCarousel
@@ -138,6 +150,8 @@ export const StepTwo = ({
             control={control}
             name="ornamentPosition"
             options={currentOrnamentPositions}
+            allowCustom
+            disabled={!hasOrnament}
           />
         </View>
       )}
