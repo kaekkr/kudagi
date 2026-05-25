@@ -42,7 +42,7 @@ export default function OrderForm() {
     step, setStep, control, handleSubmit,
     handleNext, reset, pickPhoto,
     photoUploading, referencePhoto, setReferencePhoto,
-    hydrated,
+    hydrated, setValue
   } = useOrderFormLogic(uploadReferencePhoto);
 
   const handleNextWithScroll = async () => {
@@ -118,7 +118,8 @@ export default function OrderForm() {
               t={t} control={control} lang={lang}
               ornamentList={ornamentList} getOrnamentImage={getOrnamentImage}
               photoUploading={photoUploading} referencePhoto={referencePhoto}
-              pickPhoto={pickPhoto} setReferencePhoto={setReferencePhoto}
+              pickPhoto={pickPhoto} setReferencePhoto={setReferencePhoto} 
+              setValue={setValue}
             />
           )}
           {step === 3 && <StepThree t={t} control={control} lang={lang} />}

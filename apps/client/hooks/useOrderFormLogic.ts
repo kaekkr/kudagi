@@ -25,6 +25,7 @@ export const DEFAULT_VALUES = {
   orderType: "Стандартный",
   // Standard order
   garmentModel: "Платье",
+  garmentModelCustom: "",
   fabricColor: "",
   fabricType: "",
   ornamentType: [] as string[],
@@ -82,7 +83,7 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
   const [referencePhoto, setReferencePhoto] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const { control, handleSubmit, watch, reset, trigger, getValues } = useForm({
+  const { control, handleSubmit, watch, reset, trigger, getValues, setValue } = useForm({
     defaultValues: DEFAULT_VALUES,
   });
 
@@ -184,6 +185,6 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
     step, setStep, control, handleSubmit, watch,
     handleNext, reset: resetAll, pickPhoto,
     photoUploading, referencePhoto, setReferencePhoto,
-    hydrated,
+    hydrated, setValue
   };
 };

@@ -1,4 +1,4 @@
-import { Controller } from "react-hook-form";
+import { Controller, useFormContext, } from "react-hook-form";
 import { View, Text, Pressable, TextInput } from "react-native";
 
 interface MultiChipSelectorProps {
@@ -24,6 +24,7 @@ export const MultiChipSelector = ({
   customName,
 }: MultiChipSelectorProps) => {
   const resolvedCustomName = customName ?? `${name}Custom`;
+  const { setValue } = useFormContext()
 
   return (
     <Controller
@@ -53,7 +54,16 @@ export const MultiChipSelector = ({
                   disabled={disabled}
                   onPress={() => {
                     if (isSelected) {
-                      onChange(value.filter((v: string) => v !== opt));
+                      const next = value.filter(
+                        (v: string) => v !== opt
+                      );
+
+                      onChange(next);
+
+                      if (OTHER_VALUES.includes(opt)) {
+                        onChange(next);
+                        setValue(resolvedCustomName, "");
+                      }
                     } else {
                       onChange([...value, opt]);
                     }

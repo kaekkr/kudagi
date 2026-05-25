@@ -1,14 +1,15 @@
-import { View, Text, Pressable, Image, ActivityIndicator, ScrollView } from "react-native";
-import { Control, Controller, useWatch } from "react-hook-form";
+import { View, Text, Pressable, Image, ActivityIndicator } from "react-native";
+import { Control, Controller, useFormContext, useWatch } from "react-hook-form";
 import { Camera } from "lucide-react-native";
 import { InputField } from "./ui/InputField";
 import { SectionLabel } from "./ui/SectionLabel";
 import { ChipSelector } from "./ui/ChipSelector";
 import { OrnamentCarousel } from "./ui/OrnamentCarousel";
 import { MultiChipSelector } from "./ui/MultiChipSelector";
-import { GARMENT_MODELS_T, ORNAMENT_POSITIONS_T, ORDER_TYPES_T, ORDER_TYPE_VALUES } from "@/constants/translations";
+import { GARMENT_MODELS_T, ORNAMENT_POSITIONS_T } from "@/constants/translations";
 import { KU_GOLD } from "@/constants/orderConstants";
 import { PairedOrnamentBlock } from "./PairedOrnamentBlock";
+import { useEffect } from "react";
 
 interface StepTwoProps {
   t: any;
@@ -20,6 +21,7 @@ interface StepTwoProps {
   referencePhoto: string | null;
   pickPhoto: () => Promise<void>;
   setReferencePhoto: (uri: string | null) => void;
+  setValue: any;
 }
 
 /** Ornament block for a single person in paired order */
@@ -58,7 +60,7 @@ const PersonOrnamentSection = ({
 export const StepTwo = ({
   t, control, lang,
   ornamentList, getOrnamentImage,
-  photoUploading, referencePhoto, pickPhoto, setReferencePhoto,
+  photoUploading, referencePhoto, pickPhoto, setReferencePhoto, setValue
 }: StepTwoProps) => {
   const currentGarmentModels     = lang === "kaz" ? GARMENT_MODELS_T.kaz     : GARMENT_MODELS_T.rus;
   const currentOrnamentPositions = lang === "kaz" ? ORNAMENT_POSITIONS_T.kaz : ORNAMENT_POSITIONS_T.rus;
@@ -66,7 +68,15 @@ export const StepTwo = ({
   const orderType = useWatch({ control, name: "orderType", defaultValue: "Стандартный" });
   const isPaired  = orderType === "Парный";
   const ornamentSelected = useWatch({ control, name: "ornamentType", defaultValue: [] });
+  const ornamentPosition = useWatch({ control, name: "ornamentPosition", defaultValue: [] });
   const hasOrnament = Array.isArray(ornamentSelected) && ornamentSelected.length > 0;
+
+  useEffect(() => {
+    if (!hasOrnament) {
+      setValue?.("ornamentPosition", []);
+      setValue?.("ornamentPositionCustom", "");
+    }
+  }, [hasOrnament, setValue]);
 
   return (
     <View>

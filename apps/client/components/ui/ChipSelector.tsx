@@ -5,9 +5,7 @@ interface ChipSelectorProps {
   control: any;
   name: string;
   options: string[];
-  /** If true, selecting "Другое"/"Басқа" shows a free-text input */
   allowCustom?: boolean;
-  /** Field name to store the custom text (defaults to `${name}Custom`) */
   customName?: string;
 }
 
@@ -23,42 +21,44 @@ export const ChipSelector = ({
   const resolvedCustomName = customName ?? `${name}Custom`;
 
   return (
-    <View className="mb-3">
-      <View className="flex-row flex-wrap">
-        {options.map((opt: string) => (
-          <Controller
-            key={opt}
-            control={control}
-            name={name}
-            render={({ field: { onChange, value } }) => (
-              <Pressable
-                onPress={() => onChange(opt)}
-                className={`mr-2 mb-2 px-4 py-2.5 rounded-xl border ${
-                  value === opt
-                    ? "border-[#C5A059] bg-[#C5A059]/10"
-                    : "border-gray-100 bg-white"
-                }`}
-              >
-                <Text
-                  className={
-                    value === opt ? "text-[#C5A059] font-bold" : "text-gray-400"
-                  }
-                >
-                  {opt}
-                </Text>
-              </Pressable>
-            )}
-          />
-        ))}
-      </View>
+    <Controller
+      control={control}
+      name={name}
+      render={({ field: { onChange, value } }) => {
+        const selected = value;
 
-      {/* Custom text input when "Другое" is selected */}
-      {allowCustom && (
-        <Controller
-          control={control}
-          name={name}
-          render={({ field: { value: selected } }) =>
-            OTHER_VALUES.includes(selected) ? (
+        return (
+          <View className="mb-3">
+            <View className="flex-row flex-wrap">
+              {options.map((opt) => {
+                const isSelected = selected === opt;
+
+                return (
+                  <Pressable
+                    key={opt}
+                    onPress={() => onChange(opt)}
+                    className={`mr-2 mb-2 px-4 py-2.5 rounded-xl border ${
+                      isSelected
+                        ? "border-[#C5A059] bg-[#C5A059]/10"
+                        : "border-gray-100 bg-white"
+                    }`}
+                  >
+                    <Text
+                      className={
+                        isSelected
+                          ? "text-[#C5A059] font-bold"
+                          : "text-gray-400"
+                      }
+                    >
+                      {opt}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* custom input */}
+            {allowCustom && OTHER_VALUES.includes(selected) && (
               <Controller
                 control={control}
                 name={resolvedCustomName}
@@ -67,24 +67,20 @@ export const ChipSelector = ({
                     value={value ?? ""}
                     onChangeText={onChange}
                     placeholder="Введите своё название..."
-                    placeholderTextColor="#C1C1C1"
                     style={{
                       borderWidth: 1,
                       borderColor: "#C5A059",
                       borderRadius: 12,
                       padding: 12,
-                      fontSize: 14,
-                      color: "#1F2937",
-                      backgroundColor: "white",
-                      marginTop: 4,
+                      marginTop: 6,
                     }}
                   />
                 )}
               />
-            ) : null
-          }
-        />
-      )}
-    </View>
+            )}
+          </View>
+        );
+      }}
+    />
   );
 };
