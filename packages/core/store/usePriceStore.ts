@@ -4,14 +4,14 @@ import { db } from "../supabase";
 export interface ProductPrice {
   id: string;
   productModel: string;
-  price_from: number;
+  price_from: number; // Frontend domain schema
 }
 
 export interface OrnamentPrice {
   id: string;
   name: string;
   imageUrl: string;
-  price_from: number;
+  price_from: number; // Frontend domain schema
 }
 
 interface PriceState {
@@ -32,11 +32,13 @@ export const usePriceStore = create<PriceState>((set, get) => ({
   fetchPrices: async () => {
     set({ loading: true });
     try {
-      const data = await db("/product_prices?select=*");
+      // 🚀 FIX: Added sorting order parameter so the items stay fixed in place
+      const data = await db("/product_prices?select=*&order=productmodel.asc");
+      
       const mapped = (data ?? []).map((row: any) => ({
         id: row.id,
         productModel: row.productmodel,
-        price_from: row.price_from ?? 0,
+        price_from: row.pricefrom ?? 0,
       }));
       set({ prices: mapped, loading: false });
     } catch {
@@ -47,21 +49,14 @@ export const usePriceStore = create<PriceState>((set, get) => ({
   fetchOrnamentPrices: async () => {
     set({ loading: true });
     try {
-      // Fetch without price_from first — that column may not exist yet
-      const data = await db("/ornaments?select=id,name,image_url&order=created_at.asc");
-      // Try to get price_from separately; if the column doesn't exist the query fails silently
-      let priceMap: Record<string, number> = {};
-      try {
-        const priceData = await db("/ornaments?select=id,price_from&order=created_at.asc");
-        (priceData ?? []).forEach((r: any) => { priceMap[r.id] = r.price_from ?? 0; });
-      } catch {
-        // column doesn't exist yet — all prices default to 0
-      }
+      // 🚀 OPTIMIZATION: Pull all data (including pricefrom) in 1 single network request
+      const data = await db("/ornaments?select=id,name,image_url,pricefrom&order=created_at.asc");
+      
       const mapped = (data ?? []).map((row: any) => ({
         id:        row.id,
         name:      row.name,
         imageUrl:  row.image_url ?? "",
-        price_from: priceMap[row.id] ?? 0,
+        price_from: row.pricefrom ?? 0, // Direct clean mapping
       }));
       set({ ornamentPrices: mapped, loading: false });
     } catch {
@@ -72,7 +67,7 @@ export const usePriceStore = create<PriceState>((set, get) => ({
   updatePrice: async (id, price_from) => {
     await db(`/product_prices?id=eq.${id}`, {
       method: "PATCH",
-      body: JSON.stringify({ price_from: price_from }),
+      body: JSON.stringify({ pricefrom: price_from }), 
       headers: { Prefer: "return=minimal" },
     });
     get().fetchPrices();
@@ -82,14 +77,13 @@ export const usePriceStore = create<PriceState>((set, get) => ({
     try {
       await db(`/ornaments?id=eq.${id}`, {
         method: "PATCH",
-        body: JSON.stringify({ price_from: price_from }),
+        body: JSON.stringify({ pricefrom: price_from }),
         headers: { Prefer: "return=minimal" },
       });
       get().fetchOrnamentPrices();
     } catch (e: any) {
-      // If price_from column doesn't exist yet, show a helpful message
-      if (e.message?.includes("price_from")) {
-        throw new Error('Добавьте колонку "price_from" (integer, default 0) в таблицу ornaments в Supabase');
+      if (e.message?.includes("pricefrom") || e.message?.includes("price_from")) {
+        throw new Error('Добавьте колонку "pricefrom" (integer, default 0) в таблицу ornaments в Supabase');
       }
       throw e;
     }

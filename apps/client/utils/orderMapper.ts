@@ -53,7 +53,12 @@ function resolveCustomArray(arr: string[], custom: string | undefined): string[]
   );
 }
 
-export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagiOrder => {
+// ── Added 'totalPrice' as a third argument ───────────────────────────────────
+export const mapFormToOrder = (
+  data: any, 
+  referencePhoto: string | null, 
+  totalPrice?: number
+): KuDagiOrder => {
   const isPaired = data.orderType === "Парный";
 
   const person1: PairedPerson | undefined = isPaired ? {
@@ -96,7 +101,10 @@ export const mapFormToOrder = (data: any, referencePhoto: string | null): KuDagi
     measurements:     isPaired
       ? parsePairedMeasurements(data.p1Measurements)
       : parseStandardMeasurements(data),
-    totalPrice:       0,
+      
+    // ✨ FIX: Use the passed price, fall back to form data, or default to 0
+    totalPrice:       totalPrice ?? data.totalPrice ?? 0, 
+    
     depositPaid:      false,
     fullPaid:         false,
     paymentMethod:    data.paymentMethod,
