@@ -25,19 +25,23 @@ export const DEFAULT_VALUES = {
   orderType: "Стандартный",
   // Standard order
   garmentModel: "Платье",
+  garmentModelCustom: "",
   fabricColor: "",
   fabricType: "",
   ornamentType: [] as string[],
   ornamentPosition: [] as string[],
+  ornamentPositionCustom: "",
   embroideryColor: "",
   colorConfirmed: false,
   // Paired — person 1
   p1GarmentModel: "Платье",
+  p1GarmentModelCustom: "",
   /** Array of { type: string, positions: string[] } */
   p1Ornaments: [] as { type: string; positions: string[] }[],
   p1Measurements: { ...EMPTY_MEASUREMENTS },
   // Paired — person 2
   p2GarmentModel: "Платье",
+  p2GarmentModelCustom: "",
   p2Ornaments: [] as { type: string; positions: string[] }[],
   p2Measurements: { ...EMPTY_MEASUREMENTS },
   // Standard measurements (flat)
@@ -79,7 +83,7 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
   const [referencePhoto, setReferencePhoto] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const { control, handleSubmit, watch, reset, trigger, getValues } = useForm({
+  const { control, handleSubmit, watch, reset, trigger, getValues, setValue } = useForm({
     defaultValues: DEFAULT_VALUES,
   });
 
@@ -181,6 +185,6 @@ export const useOrderFormLogic = (uploadReferencePhoto: (file: any) => Promise<s
     step, setStep, control, handleSubmit, watch,
     handleNext, reset: resetAll, pickPhoto,
     photoUploading, referencePhoto, setReferencePhoto,
-    hydrated,
+    hydrated, setValue
   };
 };

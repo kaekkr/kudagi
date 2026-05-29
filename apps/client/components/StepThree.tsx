@@ -1,4 +1,4 @@
-import { View, Text, Pressable, TextInput, ScrollView } from "react-native";
+import { View, Text, Pressable, TextInput } from "react-native";
 import { Control, Controller, useWatch } from "react-hook-form";
 import { Ruler } from "lucide-react-native";
 import { SectionLabel } from "./ui/SectionLabel";
@@ -7,6 +7,8 @@ import { Checkbox } from "./ui/Checkbox";
 import { validateDate } from "@/hooks/useOrderFormLogic";
 import { OCCASIONS_T, DELIVERY_METHODS_T, Lang } from "@/constants/translations";
 import { KU_GOLD } from "@/constants/orderConstants";
+import { getMeasurementFields } from "@/utils/measurements";
+import { applyDateMask, applyNumericMask } from "@/utils/masks";
 
 interface StepThreeProps {
   t: any;
@@ -14,38 +16,8 @@ interface StepThreeProps {
   lang: Lang;
 }
 
-function applyDateMask(raw: string): string {
-  const digits = raw.replace(/\D/g, "").substring(0, 8);
-  let result = "";
-  for (let i = 0; i < digits.length; i++) {
-    if (i === 2 || i === 4) result += ".";
-    result += digits[i];
-  }
-  return result;
-}
+// ── Sub-components ───────────────────────────────────────────────────────────
 
-function applyNumericMask(raw: string): string {
-  return raw.replace(/\D/g, "").substring(0, 5);
-}
-
-const getMeasurementFields = (lang: Lang) => [
-  { name: "chest",             abbr: "Ог",     label: lang === "kaz" ? "Кеуде өлшемі"     : "Обхват груди" },
-  { name: "waist",             abbr: "От",     label: lang === "kaz" ? "Бел өлшемі"        : "Обхват талии" },
-  { name: "hips",              abbr: "Об",     label: lang === "kaz" ? "Жамбас өлшемі"     : "Обхват бедер" },
-  { name: "chestHeight",       abbr: "Вг",     label: lang === "kaz" ? "Кеуде биіктігі"    : "Высота груди" },
-  { name: "backWidth",         abbr: "Шсп",    label: lang === "kaz" ? "Арқа ені"          : "Ширина спинки" },
-  { name: "frontLength",       abbr: "Дтп",    label: lang === "kaz" ? "Алдыңғы ұзындық"  : "Длина полочки" },
-  { name: "backLength",        abbr: "Дтс",    label: lang === "kaz" ? "Арқа ұзындығы"    : "Длина спинки" },
-  { name: "shoulderLength",    abbr: "Дплеча", label: lang === "kaz" ? "Иық ұзындығы"     : "Длина плеча" },
-  { name: "skirtLength",       abbr: "Дю",     label: lang === "kaz" ? "Юбка ұзындығы"    : "Длина юбки" },
-  { name: "garmentLength",     abbr: "Дизд",   label: lang === "kaz" ? "Бұйым ұзындығы"   : "Длина изделия" },
-  { name: "armCircumference",  abbr: "Орук",   label: lang === "kaz" ? "Қол өлшемі"       : "Обхват руки" },
-  { name: "sleeveLength",      abbr: "Д рук",  label: lang === "kaz" ? "Жең ұзындығы"     : "Длина рукавов" },
-  { name: "neckCircumference", abbr: "Шея",    label: lang === "kaz" ? "Мойын өлшемі"     : "Обхват шеи" },
-  { name: "height",            abbr: "Бой",    label: lang === "kaz" ? "Бойы"              : "Рост" },
-];
-
-/** Single measurement field */
 const MeasurementInput = ({
   control,
   fieldName,
@@ -88,8 +60,13 @@ const MeasurementInput = ({
   </View>
 );
 
-/** Full measurement grid for standard order */
-const StandardMeasurements = ({ control, lang, t }: { control: Control<any>; lang: Lang; t: any }) => {
+const StandardMeasurements = ({
+  control, lang, t,
+}: {
+  control: Control<any>;
+  lang: Lang;
+  t: any;
+}) => {
   const method = useWatch({ control, name: "measurementMethod", defaultValue: "самостоятельно" });
   const fields = getMeasurementFields(lang);
 
@@ -109,7 +86,11 @@ const StandardMeasurements = ({ control, lang, t }: { control: Control<any>; lan
               { value: "самостоятельно", label: t.selfMeasure },
               { value: "мастер",         label: t.masterMeasure },
             ].map((m) => (
-              <Pressable key={m.value} onPress={() => onChange(m.value)} style={{ flexDirection: "row", alignItems: "center", marginRight: 24 }}>
+              <Pressable
+                key={m.value}
+                onPress={() => onChange(m.value)}
+                style={{ flexDirection: "row", alignItems: "center", marginRight: 24 }}
+              >
                 <View style={{
                   width: 16, height: 16, borderRadius: 8, borderWidth: 1.5,
                   borderColor: value === m.value ? KU_GOLD : "#D1D5DB",
@@ -134,7 +115,6 @@ const StandardMeasurements = ({ control, lang, t }: { control: Control<any>; lan
   );
 };
 
-/** Measurement grid for one person in a paired order */
 const PairedPersonMeasurements = ({
   control, lang, t, prefix, personLabel,
 }: {
@@ -145,13 +125,8 @@ const PairedPersonMeasurements = ({
   personLabel: string;
 }) => {
   const fields = getMeasurementFields(lang);
-
   return (
-    <View style={{
-      borderWidth: 1, borderColor: "#E5E7EB",
-      borderRadius: 16, padding: 14, marginBottom: 16,
-    }}>
-      {/* Header */}
+    <View style={{ borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 16, padding: 14, marginBottom: 16 }}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
         <View style={{
           backgroundColor: KU_GOLD, borderRadius: 8,
@@ -163,7 +138,6 @@ const PairedPersonMeasurements = ({
         </View>
         <Text style={{ fontWeight: "600", color: "#374151", fontSize: 15 }}>{personLabel}</Text>
       </View>
-
       <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" }}>
         {fields.map((f) => (
           <MeasurementInput
@@ -179,6 +153,8 @@ const PairedPersonMeasurements = ({
   );
 };
 
+// ── StepThree ────────────────────────────────────────────────────────────────
+
 export const StepThree = ({ t, control, lang }: StepThreeProps) => {
   const orderType = useWatch({ control, name: "orderType", defaultValue: "Стандартный" });
   const isPaired  = orderType === "Парный";
@@ -188,7 +164,7 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
       <Text style={{ fontSize: 28, fontWeight: "700", marginBottom: 4 }}>{t.newOrder}</Text>
       <Text style={{ color: "#9CA3AF", marginBottom: 24 }}>{t.step3title}</Text>
 
-      {/* ── Measurements ── */}
+      {/* Measurements */}
       {isPaired ? (
         <View>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
@@ -208,11 +184,11 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
         <StandardMeasurements control={control} lang={lang} t={t} />
       )}
 
-      {/* ── Occasion ── */}
+      {/* Occasion */}
       <SectionLabel>{t.occasion}</SectionLabel>
       <ChipSelector control={control} name="occasion" options={OCCASIONS_T[lang]} />
 
-      {/* ── Desired date ── */}
+      {/* Desired date */}
       <SectionLabel>{t.desiredDate}</SectionLabel>
       <Controller
         control={control}
@@ -228,8 +204,7 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
           <View style={{ marginBottom: 12 }}>
             <TextInput
               style={{
-                backgroundColor: "white",
-                borderWidth: 1,
+                backgroundColor: "white", borderWidth: 1,
                 borderColor: error ? "#FCA5A5" : "#F3F4F6",
                 padding: 16, borderRadius: 12, color: "#1F2937",
               }}
@@ -240,18 +215,27 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
               keyboardType="numeric"
               maxLength={10}
             />
-            {error && <Text style={{ color: "#F87171", fontSize: 12, marginTop: 4, marginLeft: 4 }}>{error.message}</Text>}
+            {error && (
+              <Text style={{ color: "#F87171", fontSize: 12, marginTop: 4, marginLeft: 4 }}>
+                {error.message}
+              </Text>
+            )}
           </View>
         )}
       />
 
-      <Checkbox control={control} name="deadlineConfirmed" text={t.confirmDeadline} rules={{ required: t.errorDeadline }} />
+      <Checkbox
+        control={control}
+        name="deadlineConfirmed"
+        text={t.confirmDeadline}
+        rules={{ required: t.errorDeadline }}
+      />
 
-      {/* ── Delivery ── */}
+      {/* Delivery */}
       <SectionLabel>{t.deliveryMethod}</SectionLabel>
       <ChipSelector control={control} name="deliveryMethod" options={DELIVERY_METHODS_T[lang]} />
 
-      {/* ── Comment ── */}
+      {/* Comment */}
       <SectionLabel>{t.comment}</SectionLabel>
       <Controller
         control={control}
@@ -273,7 +257,12 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
         )}
       />
 
-      <Checkbox control={control} name="confirmData" text={t.confirmData} rules={{ required: t.errorConfirmData }} />
+      <Checkbox
+        control={control}
+        name="confirmData"
+        text={t.confirmData}
+        rules={{ required: t.errorConfirmData }}
+      />
     </View>
   );
 };

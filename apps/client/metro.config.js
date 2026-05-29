@@ -14,6 +14,13 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, "node_modules"),
 ];
 
+// Force single instances of packages that use module-level singletons.
+config.resolver.extraNodeModules = {
+  zustand: path.resolve(workspaceRoot, "node_modules/zustand"),
+  react: path.resolve(workspaceRoot, "node_modules/react"),
+  "react-native": path.resolve(workspaceRoot, "node_modules/react-native"),
+};
+
 // Force CJS resolution — prevents Metro from picking ESM builds
 // that contain import.meta (e.g. zustand)
 config.resolver.unstable_enablePackageExports = false;

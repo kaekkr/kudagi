@@ -1,85 +1,81 @@
 import { create } from "zustand";
+import { db } from "../supabase";
 import { KuDagiOrder, OrderMeasurements, OrderStatus, PairedPerson } from "../types/order";
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY!;
-
-const BASE_HEADERS = {
-  "Content-Type": "application/json",
-  "apikey": SUPABASE_KEY,
-  "Authorization": `Bearer ${SUPABASE_KEY}`,
-};
+// ── Row ↔ Domain mappers ─────────────────────────────────────────────────────
 
 function parseMeasurements(row: any, prefix = ""): OrderMeasurements {
   const p = prefix ? `${prefix}_` : "";
   return {
-    height:           row[`${p}height`]            ?? 0,
-    chest:            row[`${p}chest`]             ?? 0,
-    waist:            row[`${p}waist`]             ?? 0,
-    hips:             row[`${p}hips`]              ?? 0,
-    chestHeight:      row[`${p}chest_height`]      ?? 0,
-    backWidth:        row[`${p}back_width`]        ?? 0,
-    frontLength:      row[`${p}front_length`]      ?? 0,
-    backLength:       row[`${p}back_length`]       ?? 0,
-    shoulderLength:   row[`${p}shoulder_length`]   ?? 0,
-    skirtLength:      row[`${p}skirt_length`]      ?? 0,
-    garmentLength:    row[`${p}garment_length`]    ?? 0,
-    armCircumference: row[`${p}arm_circumference`] ?? 0,
-    sleeveLength:     row[`${p}sleeve_length`]     ?? 0,
-    neckCircumference:row[`${p}neck_circumference`]?? 0,
+    height:            row[`${p}height`]             ?? 0,
+    chest:             row[`${p}chest`]              ?? 0,
+    waist:             row[`${p}waist`]              ?? 0,
+    hips:              row[`${p}hips`]               ?? 0,
+    chestHeight:       row[`${p}chest_height`]       ?? 0,
+    backWidth:         row[`${p}back_width`]         ?? 0,
+    frontLength:       row[`${p}front_length`]       ?? 0,
+    backLength:        row[`${p}back_length`]        ?? 0,
+    shoulderLength:    row[`${p}shoulder_length`]    ?? 0,
+    skirtLength:       row[`${p}skirt_length`]       ?? 0,
+    garmentLength:     row[`${p}garment_length`]     ?? 0,
+    armCircumference:  row[`${p}arm_circumference`]  ?? 0,
+    sleeveLength:      row[`${p}sleeve_length`]      ?? 0,
+    neckCircumference: row[`${p}neck_circumference`] ?? 0,
   };
 }
 
 function fromRow(row: any): KuDagiOrder {
   const isPaired = row.order_type === "Парный";
 
-  const person1: PairedPerson | undefined = isPaired ? {
-    garmentModel:     row.p1_garment_model    ?? "",
-    ornaments: row.p1_ornaments ?? [],
+  const person1: PairedPerson | undefined = isPaired
+    ? {
+        garmentModel: row.p1_garment_model ?? "",
+        ornaments:    row.p1_ornaments     ?? [],
+        measurements: parseMeasurements(row, "p1"),
+      }
+    : undefined;
 
-    measurements:     parseMeasurements(row, "p1"),
-  } : undefined;
-
-  const person2: PairedPerson | undefined = isPaired ? {
-    garmentModel:     row.p2_garment_model    ?? "",
-    ornaments: row.p2_ornaments ?? [],
-
-    measurements:     parseMeasurements(row, "p2"),
-  } : undefined;
+  const person2: PairedPerson | undefined = isPaired
+    ? {
+        garmentModel: row.p2_garment_model ?? "",
+        ornaments:    row.p2_ornaments     ?? [],
+        measurements: parseMeasurements(row, "p2"),
+      }
+    : undefined;
 
   return {
-    id:               row.id,
-    orderName:        row.order_name          ?? "",
-    clientName:       row.client_name,
-    phone:            row.phone               ?? "",
-    whatsApp:         row.whats_app           ?? "",
-    city:             row.city                ?? "",
-    address:          row.address             ?? "",
-    orderType:        row.order_type          ?? "",
-    garmentModel:     row.garment_model       ?? "",
-    fabricColor:      row.fabric_color        ?? "",
-    fabricType:       row.fabric_type         ?? "",
-    ornamentType:     row.ornament_type       ?? [],
-    ornamentPosition: row.ornament_position   ?? [],
-    garmentOrnaments: row.garment_ornaments   ?? [],
+    id:                row.id,
+    orderName:         row.order_name          ?? "",
+    clientName:        row.client_name,
+    phone:             row.phone               ?? "",
+    whatsApp:          row.whats_app           ?? "",
+    city:              row.city                ?? "",
+    address:           row.address             ?? "",
+    orderType:         row.order_type          ?? "",
+    garmentModel:      row.garment_model       ?? "",
+    fabricColor:       row.fabric_color        ?? "",
+    fabricType:        row.fabric_type         ?? "",
+    ornamentType:      row.ornament_type       ?? [],
+    ornamentPosition:  row.ornament_position   ?? [],
+    garmentOrnaments:  row.garment_ornaments   ?? [],
     person1,
     person2,
-    embroideryColor:  row.embroidery_color    ?? "",
-    contactPerson:    row.contact_person      ?? "",
-    occasion:         row.occasion            ?? "",
-    desiredDate:      row.desired_date        ?? "",
-    deliveryMethod:   row.delivery_method     ?? "",
-    comment:          row.comment             ?? "",
-    referencePhotoUrl:row.reference_photo_url ?? "",
-    consentedToData:  row.consented_to_data   ?? false,
-    measurements:     parseMeasurements(row),
-    totalPrice:       row.total_price         ?? 0,
-    depositPaid:      row.deposit_paid        ?? false,
-    fullPaid:         row.full_paid           ?? false,
-    paymentMethod:    row.payment_method      ?? "",
-    status:           row.status as OrderStatus,
-    createdAt:        row.created_at,
-    statusUpdatedAt:  row.status_updated_at,
+    embroideryColor:   row.embroidery_color    ?? "",
+    contactPerson:     row.contact_person      ?? "",
+    occasion:          row.occasion            ?? "",
+    desiredDate:       row.desired_date        ?? "",
+    deliveryMethod:    row.delivery_method     ?? "",
+    comment:           row.comment             ?? "",
+    referencePhotoUrl: row.reference_photo_url ?? "",
+    consentedToData:   row.consented_to_data   ?? false,
+    measurements:      parseMeasurements(row),
+    totalPrice:        row.total_price         ?? 0,
+    depositPaid:       row.deposit_paid        ?? false,
+    fullPaid:          row.full_paid           ?? false,
+    paymentMethod:     row.payment_method      ?? "",
+    status:            row.status as OrderStatus,
+    createdAt:         row.created_at,
+    statusUpdatedAt:   row.status_updated_at,
   };
 }
 
@@ -107,7 +103,7 @@ function toRow(order: KuDagiOrder) {
   const isPaired = order.orderType === "Парный";
   return {
     id:                   order.id,
-    order_name:           order.orderName          ?? "",
+    order_name:           order.orderName         ?? "",
     client_name:          order.clientName,
     phone:                order.phone,
     whats_app:            order.whatsApp,
@@ -117,16 +113,13 @@ function toRow(order: KuDagiOrder) {
     garment_model:        order.garmentModel,
     fabric_color:         order.fabricColor,
     fabric_type:          order.fabricType,
-    ornament_type:        order.ornamentType        ?? [],
-    ornament_position:    order.ornamentPosition    ?? [],
-    garment_ornaments:    order.garmentOrnaments    ?? [],
-    // Paired person fields
-    p1_garment_model:     isPaired ? (order.person1?.garmentModel    ?? "") : null,
-    p1_ornaments: isPaired ? (order.person1?.ornaments ?? []) : null,
-
-    p2_garment_model:     isPaired ? (order.person2?.garmentModel    ?? "") : null,
-    p2_ornaments: isPaired ? (order.person2?.ornaments ?? []) : null,
-
+    ornament_type:        order.ornamentType       ?? [],
+    ornament_position:    order.ornamentPosition   ?? [],
+    garment_ornaments:    order.garmentOrnaments   ?? [],
+    p1_garment_model:     isPaired ? (order.person1?.garmentModel ?? "") : "",
+    p1_ornaments:         isPaired ? (order.person1?.ornaments ?? []) : [],
+    p2_garment_model:     isPaired ? (order.person2?.garmentModel ?? "") : "",
+    p2_ornaments:         isPaired ? (order.person2?.ornaments ?? []) : [],
     ...measurementsToRow(order.measurements),
     ...(isPaired ? measurementsToRow(order.person1?.measurements, "p1") : {}),
     ...(isPaired ? measurementsToRow(order.person2?.measurements, "p2") : {}),
@@ -148,15 +141,7 @@ function toRow(order: KuDagiOrder) {
   };
 }
 
-async function db(path: string, options: RequestInit = {}) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
-    ...options,
-    headers: { ...BASE_HEADERS, ...(options.headers ?? {}) },
-  });
-  if (!res.ok) throw new Error(await res.text());
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
-}
+// ── Store ────────────────────────────────────────────────────────────────────
 
 interface OrderState {
   orders: KuDagiOrder[];
@@ -165,7 +150,10 @@ interface OrderState {
   fetchOrders: () => Promise<void>;
   addOrder: (order: KuDagiOrder) => Promise<void>;
   updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
-  updateOrderPayment: (id: string, updates: { depositPaid?: boolean; fullPaid?: boolean }) => Promise<void>;
+  updateOrderPayment: (
+    id: string,
+    updates: { depositPaid?: boolean; fullPaid?: boolean }
+  ) => Promise<void>;
   checkDuplicate: (phone: string, orderName: string) => Promise<KuDagiOrder | null>;
 }
 
@@ -185,18 +173,33 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   addOrder: async (order: KuDagiOrder) => {
-    set((state) => ({ orders: [order, ...state.orders] }));
+    set((state) => ({
+      orders: [order, ...state.orders],
+      error: null,
+    }));
+
     try {
-      await db("/orders", {
+      const result = await db("/orders", {
         method: "POST",
-        headers: { Prefer: "return=minimal" },
+        headers: {
+          Prefer: "return=representation",
+        },
         body: JSON.stringify(toRow(order)),
       });
+
+      console.log("INSERT OK", result);
+
     } catch (e: any) {
+      console.error("ORDER INSERT FAILED", e);
+
       set((state) => ({
-        orders: state.orders.filter((o) => o.id !== order.id),
+        orders: state.orders.filter(
+          (o) => o.id !== order.id
+        ),
         error: e.message,
       }));
+
+      throw e;
     }
   },
 
@@ -215,9 +218,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }
   },
 
-  updateOrderPayment: async (id: string, updates: { depositPaid?: boolean; fullPaid?: boolean }) => {
+  updateOrderPayment: async (
+    id: string,
+    updates: { depositPaid?: boolean; fullPaid?: boolean }
+  ) => {
     set((state) => ({
-      orders: state.orders.map((o) => o.id === id ? { ...o, ...updates } : o),
+      orders: state.orders.map((o) => (o.id === id ? { ...o, ...updates } : o)),
     }));
     try {
       const body: any = {};

@@ -2,7 +2,7 @@ import { View, Text, Pressable, Image, useWindowDimensions } from "react-native"
 import { Controller, Control } from "react-hook-form";
 import { InputField } from "./ui/InputField";
 import { SectionLabel } from "./ui/SectionLabel";
-import { ORDER_TYPES_T } from "@/constants/translations";
+import { ORDER_TYPES_T, ORDER_TYPE_VALUES } from "@/constants/translations";
 
 interface StepOneProps {
   t: any;
@@ -12,7 +12,6 @@ interface StepOneProps {
 }
 
 export const StepOne = ({ t, lang, control, getTypePhoto }: StepOneProps) => {
-  const currentOrderTypes = lang === "kaz" ? ORDER_TYPES_T.kaz : ORDER_TYPES_T.rus;
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
@@ -21,7 +20,6 @@ export const StepOne = ({ t, lang, control, getTypePhoto }: StepOneProps) => {
       <Text className="text-3xl font-bold mb-1">{t.newOrder}</Text>
       <Text className="text-gray-400 mb-6">{t.step1title}</Text>
 
-      {/* Order name for uniqueness */}
       <InputField
         control={control}
         name="orderName"
@@ -52,54 +50,55 @@ export const StepOne = ({ t, lang, control, getTypePhoto }: StepOneProps) => {
       <InputField control={control} name="address" placeholder={t.address} />
 
       <SectionLabel>{t.orderType}</SectionLabel>
-      <View className="w-full px-2 md:px-6">
-        <View className="flex-row justify-between w-full">
-          <View className="w-[45%]">
-            {currentOrderTypes.map((type, index) => (
-              <Controller
-                key={type}
-                control={control}
-                name="orderType"
-                render={({ field: { onChange, value } }) => {
-                  const russianValue = ORDER_TYPES_T.rus[index];
-                  const isActive = value === russianValue;
+
+      <Controller
+        control={control}
+        name="orderType"
+        render={({ field: { value, onChange } }) => (
+          <View className="w-full px-2 md:px-6">
+            <View className="flex-row justify-between w-full">
+              <View className="w-[45%]">
+                {ORDER_TYPES_T[lang].map((label, index) => {
+                  const internalValue = ORDER_TYPE_VALUES[index];
+                  const isActive = value === internalValue;
+
                   return (
                     <Pressable
-                      onPress={() => onChange(russianValue)}
-                      className={`mb-2 p-3.5 rounded-xl border ${isActive ? "border-[#C5A059] bg-[#C5A059]/5" : "border-gray-200"}`}
+                      key={internalValue}
+                      onPress={() => onChange(internalValue)}
+                      className={`mb-2 p-3.5 rounded-xl border ${
+                        isActive ? "border-[#C5A059] bg-[#C5A059]/5" : "border-gray-200"
+                      }`}
                     >
-                      <Text className={`text-center ${isActive ? "text-[#C5A059] font-semibold" : "text-gray-500"}`}>
-                        {type}
+                      <Text
+                        className={`text-center ${
+                          isActive ? "text-[#C5A059] font-semibold" : "text-gray-500"
+                        }`}
+                      >
+                        {label}
                       </Text>
                     </Pressable>
                   );
-                }}
-              />
-            ))}
+                })}
+              </View>
+
+              <View
+                className={`w-[50%] overflow-hidden items-center justify-center ${
+                  isTablet ? "bg-gray-100 rounded-3xl" : "rounded-3xl"
+                }`}
+                style={{ height: ORDER_TYPES_T[lang].length * (isTablet ? 70 : 60) }}
+              >
+                <Image
+                  source={getTypePhoto(value)}
+                  className="w-full h-full"
+                  resizeMode={isTablet ? "contain" : "cover"}
+                  style={{ borderRadius: 24 }}
+                />
+              </View>
+            </View>
           </View>
-          <Controller
-            control={control}
-            name="orderType"
-            render={({ field: { value } }) => {
-              const currentIndex = ORDER_TYPES_T.rus.indexOf(value);
-              const techType = currentIndex !== -1 ? ORDER_TYPES_T.rus[currentIndex] : "Стандартный";
-              return (
-                <View
-                  className={`w-[50%] overflow-hidden items-center justify-center ${isTablet ? "bg-gray-100 rounded-3xl" : "rounded-3xl"}`}
-                  style={{ height: currentOrderTypes.length * (isTablet ? 70 : 60) }}
-                >
-                  <Image
-                    source={getTypePhoto(techType)}
-                    className="w-full h-full"
-                    resizeMode={isTablet ? "contain" : "cover"}
-                    style={{ borderRadius: 24 }}
-                  />
-                </View>
-              );
-            }}
-          />
-        </View>
-      </View>
+        )}
+      />
     </View>
   );
 };

@@ -1,4 +1,4 @@
-import { KuDagiOrder, OrderStatus, PairedPerson, useOrderStore } from "@kudagi/core";
+import { KuDagiOrder, OrderStatus, PairedPerson, useOrderStore, KU_GOLD, OrderMeasurements } from "@kudagi/core";
 import { useState } from "react";
 import { Modal, Pressable, View, Text, ScrollView, Image } from "react-native";
 import { SectionTitle } from "./ui/SectionTitle";
@@ -8,7 +8,7 @@ import { formatDate } from "@/utils/formatDate";
 import { STATUS_ORDER } from "@/constants/constants";
 import { PaymentControls } from "./PaymentControls";
 
-const MEASUREMENT_LABELS: { key: keyof PairedPerson["measurements"]; label: string }[] = [
+const MEASUREMENT_LABELS: { key: keyof OrderMeasurements; label: string }[] = [
   { key: "height",            label: "Рост" },
   { key: "chest",             label: "Обхват груди (Ог)" },
   { key: "waist",             label: "Обхват талии (От)" },
@@ -25,8 +25,6 @@ const MEASUREMENT_LABELS: { key: keyof PairedPerson["measurements"]; label: stri
   { key: "garmentLength",     label: "Длина изделия" },
 ];
 
-const KU_GOLD = "#C5A059";
-
 const PersonCard = ({ person, label, index }: { person: PairedPerson; label: string; index: number }) => (
   <Card>
     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
@@ -38,7 +36,7 @@ const PersonCard = ({ person, label, index }: { person: PairedPerson; label: str
       </View>
       <Text style={{ fontWeight: "600", color: "#374151", fontSize: 15 }}>{label}</Text>
     </View>
-    <Row label="Модель" value={person.garmentModel} />
+    <Row label="Модель" value={person.garmentModel || "—"} />
     <View style={{ marginTop: 4 }}>
       {person.ornaments?.length ? (
         person.ornaments.map((ornament, idx) => (
@@ -50,7 +48,7 @@ const PersonCard = ({ person, label, index }: { person: PairedPerson; label: str
               borderBottomColor: "#F3F4F6",
             }}
           >
-            <Row label="Орнамент" value={ornament.type} />
+            <Row label="Орнамент" value={ornament.type || "—"} />
             <Row
               label="Расположение"
               value={ornament.positions?.join(", ") || "—"}
@@ -65,11 +63,13 @@ const PersonCard = ({ person, label, index }: { person: PairedPerson; label: str
       <Text style={{ fontSize: 11, color: "#9CA3AF", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.5 }}>
         Мерки (см)
       </Text>
-      {MEASUREMENT_LABELS.map(({ key, label }) =>
-        person.measurements?.[key] ? (
-          <Row key={key} label={label} value={person.measurements[key]} />
-        ) : null
-      )}
+      {MEASUREMENT_LABELS.map(({ key, label }) => {
+        const val = person.measurements?.[key];
+        // ✨ FIX: Allow 0 to be rendered instead of filtering it out
+        return val !== undefined && val !== null ? (
+          <Row key={key} label={label} value={String(val)} />
+        ) : null;
+      })}
     </View>
   </Card>
 );
@@ -120,26 +120,26 @@ export const OrderDetailModal = ({
           {/* Клиент */}
           <SectionTitle>Клиент</SectionTitle>
           <Card>
-            <Row label="Имя" value={order.clientName} />
-            <Row label="Телефон" value={order.phone} />
-            <Row label="WhatsApp" value={order.whatsApp} />
-            {order.contactPerson ? <Row label="Контактное лицо" value={order.contactPerson} /> : null}
-            <Row label="Город" value={order.city} />
-            <Row label="Адрес" value={order.address} />
+            <Row label="Имя" value={order.clientName || "—"} />
+            <Row label="Телефон" value={order.phone || "—"} />
+            <Row label="WhatsApp" value={order.whatsApp || "—"} />
+            <Row label="Контактное лицо" value={order.contactPerson || "—"} />
+            <Row label="Город" value={order.city || "—"} />
+            <Row label="Адрес" value={order.address || "—"} />
           </Card>
 
           {/* Заказ */}
           <SectionTitle>Заказ</SectionTitle>
           <Card>
-            {order.orderName ? <Row label="Название заказа" value={order.orderName} /> : null}
-            <Row label="Вид заказа" value={order.orderType} />
-            {!isPaired ? <Row label="Модель" value={order.garmentModel} /> : null}
-            <Row label="Цвет ниток" value={order.embroideryColor} />
-            <Row label="Цвет ткани" value={order.fabricColor} />
-            <Row label="Тип ткани" value={order.fabricType} />
-            <Row label="Повод" value={order.occasion} />
-            <Row label="Нужен к" value={order.desiredDate} />
-            <Row label="Доставка" value={order.deliveryMethod} />
+            <Row label="Название заказа" value={order.orderName || "—"} />
+            <Row label="Вид заказа" value={order.orderType || "—"} />
+            {!isPaired ? <Row label="Модель" value={order.garmentModel || "—"} /> : null}
+            <Row label="Цвет ниток" value={order.embroideryColor || "—"} />
+            <Row label="Цвет ткани" value={order.fabricColor || "—"} />
+            <Row label="Тип ткани" value={order.fabricType || "—"} />
+            <Row label="Повод" value={order.occasion || "—"} />
+            <Row label="Нужен к" value={order.desiredDate || "—"} />
+            <Row label="Доставка" value={order.deliveryMethod || "—"} />
           </Card>
 
           {/* Paired persons */}
@@ -183,9 +183,15 @@ export const OrderDetailModal = ({
             <>
               <SectionTitle>Мерки (см)</SectionTitle>
               <Card>
-                {MEASUREMENT_LABELS.map(({ key, label }) => (
-                  <Row key={key} label={label} value={order.measurements?.[key]} />
-                ))}
+                {MEASUREMENT_LABELS.map(({ key, label }) => {
+                  const val = order.measurements?.[key];
+                  // ✨ FIX: explicit check to allow 0 to render rather than skipping it falsy
+                  return val !== undefined && val !== null ? (
+                    <Row key={key} label={label} value={String(val)} />
+                  ) : (
+                    <Row key={key} label={label} value="0" />
+                  );
+                })}
               </Card>
             </>
           )}
@@ -221,14 +227,22 @@ export const OrderDetailModal = ({
           {/* Payment */}
           <SectionTitle>Оплата</SectionTitle>
           <Card>
-            <Row label="Способ оплаты" value={order.paymentMethod} />
+            <Row label="Способ оплаты" value={order.paymentMethod || "—"} />
             <Row
               label="Полная стоимость"
-              value={order.totalPrice ? `${order.totalPrice.toLocaleString("ru-RU")} ₸` : "—"}
+              value={
+                order.totalPrice !== undefined && order.totalPrice !== null
+                  ? `${order.totalPrice.toLocaleString("ru-RU")} ₸`
+                  : "0 ₸"
+              }
             />
             <Row
               label="Предоплата 50%"
-              value={order.totalPrice ? `${(order.totalPrice / 2).toLocaleString("ru-RU")} ₸` : "—"}
+              value={
+                order.totalPrice !== undefined && order.totalPrice !== null
+                  ? `${(order.totalPrice / 2).toLocaleString("ru-RU")} ₸`
+                  : "0 ₸"
+              }
             />
             <View className="mt-2 border-t border-gray-50 pt-2">
               <PaymentControls

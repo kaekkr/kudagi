@@ -26,8 +26,13 @@ export const OrderCard = ({
         <Text className="font-bold text-gray-900" numberOfLines={1}>
           {order.clientName}
         </Text>
+        {order.orderName ? (
+          <Text className="text-gray-700 text-xs font-medium mt-0.5" numberOfLines={1}>
+            «{order.orderName}»
+          </Text>
+        ) : null}
         <Text className="text-gray-400 text-xs mt-0.5">
-          {order.garmentModel ?? order.orderType} · {order.phone}
+          {order.orderType} · {order.phone}
         </Text>
       </View>
       <View className="flex-row gap-2 items-center">
