@@ -8,67 +8,95 @@ export interface PriceBreakdown {
   lines: { label: string; amount: number }[];
 }
 
-/**
- * Calculates the estimated price from form data + price lists.
- * Returns a breakdown with line items.
- */
-export function calculatePrice(
-  formData: any,
-  garmentPrices: ProductPrice[],
-  ornamentPrices: OrnamentPrice[]
-): PriceBreakdown {
-  const lines: { label: string; amount: number }[] = [];
-  const isPaired = formData.orderType === "Парный";
-
-  const findGarment = (model: string) =>
-    garmentPrices.find((p) => p.productModel === model)?.price_from ?? 0;
-
-  const findOrnament = (name: string) =>
-    ornamentPrices.find((o) => o.name === name)?.price_from ?? 0;
-
+export function calculatePrice(formData: any, prices: any[], ornamentPrices: any[]): PriceBreakdown {
+  let lines: { label: string; amount: number }[] = [];
   let garmentTotal = 0;
   let ornamentTotal = 0;
+  let total = 0;
 
-  if (isPaired) {
-    // Person 1
-    const p1Model = formData.p1GarmentModel ?? "Платье";
-    const p1Price = findGarment(p1Model);
-    if (p1Price) { lines.push({ label: `Человек 1 — ${p1Model}`, amount: p1Price }); garmentTotal += p1Price; }
+  if (!formData) {
+    return { garmentTotal: 0, ornamentTotal: 0, total: 0, deposit: 0, lines: [] };
+  }
 
-    const p1Ornaments: { type: string }[] = formData.p1Ornaments ?? [];
-    p1Ornaments.forEach(({ type }) => {
-      const price = findOrnament(type);
-      if (price) { lines.push({ label: `Орнамент (чел. 1) — ${type}`, amount: price }); ornamentTotal += price; }
+  // Хелпер для поиска цены модели изделия
+  const getCleanPrice = (modelName: string) => {
+    if (!modelName) return 0;
+    let clean = modelName.trim().toLowerCase();
+    
+    // Хак на случай если в переводах "Чапан", а в БД "Шапан"
+    if (clean === "чапан") clean = "шапан";
+
+    const found = prices.find(p => (p.productModel || "").trim().toLowerCase() === clean);
+    return found ? found.price_from : 0;
+  };
+
+  // Хелпер для поиска цены орнамента (устойчивый к регистру "Тип" / "тип")
+  const getOrnamentPrice = (name: string) => {
+    if (!name) return 0;
+    const clean = name.trim().toLowerCase();
+
+    const found = ornamentPrices.find(o => (o.name || "").trim().toLowerCase() === clean);
+    return found ? found.price_from : 0;
+  };
+
+  if (formData.orderType === "Парный") {
+    // ── Человек 1 ──
+    if (formData.p1GarmentModel) {
+      const p1Price = getCleanPrice(formData.p1GarmentModel);
+      lines.push({ label: `Изделие 1 (${formData.p1GarmentModel})`, amount: p1Price });
+      garmentTotal += p1Price;
+      total += p1Price;
+    }
+    (formData.p1Ornaments || []).forEach((o: any) => {
+      if (o?.type) {
+        const op = getOrnamentPrice(o.type);
+        lines.push({ label: `Орнамент 1: ${o.type}`, amount: op });
+        ornamentTotal += op;
+        total += op;
+      }
     });
 
-    // Person 2
-    const p2Model = formData.p2GarmentModel ?? "Платье";
-    const p2Price = findGarment(p2Model);
-    if (p2Price) { lines.push({ label: `Человек 2 — ${p2Model}`, amount: p2Price }); garmentTotal += p2Price; }
-
-    const p2Ornaments: { type: string }[] = formData.p2Ornaments ?? [];
-    p2Ornaments.forEach(({ type }) => {
-      const price = findOrnament(type);
-      if (price) { lines.push({ label: `Орнамент (чел. 2) — ${type}`, amount: price }); ornamentTotal += price; }
+    // ── Человек 2 ──
+    if (formData.p2GarmentModel) {
+      const p2Price = getCleanPrice(formData.p2GarmentModel);
+      lines.push({ label: `Изделие 2 (${formData.p2GarmentModel})`, amount: p2Price });
+      garmentTotal += p2Price;
+      total += p2Price;
+    }
+    (formData.p2Ornaments || []).forEach((o: any) => {
+      if (o?.type) {
+        const op = getOrnamentPrice(o.type);
+        lines.push({ label: `Орнамент 2: ${o.type}`, amount: op });
+        ornamentTotal += op;
+        total += op;
+      }
     });
   } else {
-    const model = formData.garmentModel ?? "Платье";
-    const gPrice = findGarment(model);
-    if (gPrice) { lines.push({ label: model, amount: gPrice }); garmentTotal += gPrice; }
+    // ── Одиночный стандартный заказ ──
+    if (formData.garmentModel) {
+      const itemPrice = getCleanPrice(formData.garmentModel);
+      lines.push({ label: `Изделие: ${formData.garmentModel}`, amount: itemPrice });
+      garmentTotal += itemPrice;
+      total += itemPrice;
+    }
 
-    const ornamentTypes: string[] = formData.ornamentType ?? [];
-    ornamentTypes.forEach((type) => {
-      const price = findOrnament(type);
-      if (price) { lines.push({ label: `Орнамент — ${type}`, amount: price }); ornamentTotal += price; }
+    // Считаем поштучно из изолированного массива орнаментов
+    (formData.ornaments || []).forEach((o: any) => {
+      if (o?.type) {
+        const op = getOrnamentPrice(o.type);
+        // Добавляем в чек строку независимо от цены, чтобы пользователь видел все выбранные орнаменты
+        lines.push({ label: `Орнамент: ${o.type}`, amount: op });
+        ornamentTotal += op;
+        total += op;
+      }
     });
   }
 
-  const total = garmentTotal + ornamentTotal;
   return {
     garmentTotal,
     ornamentTotal,
     total,
-    deposit: Math.ceil(total / 2),
+    deposit: Math.round(total / 2),
     lines,
   };
 }

@@ -71,47 +71,47 @@ export default function OrderForm() {
   const handleCompletePayment = () => {
     if (!finalData) return;
 
-    // Рассчитываем стоимость динамически прямо перед отправкой:
     let calculatedTotal = 0;
 
+    const getCleanPrice = (modelName: string) => {
+      if (!modelName) return 0;
+      let clean = modelName.trim().toLowerCase();
+      if (clean === "чапан") clean = "шапан";
+      const match = prices.find(p => (p.productModel || "").trim().toLowerCase() === clean);
+      return match ? (match.price_from || 0) : 0;
+    };
+
     if (finalData.orderType === "Парный") {
-      // Логика для парного заказа (Первый человек)
-      const p1ModelPrice = prices.find(p => p.productModel === finalData.p1GarmentModel)?.price_from || 0;
+      const p1ModelPrice = getCleanPrice(finalData.p1GarmentModel);
       let p1OrnamentsPrice = 0;
       (finalData.p1Ornaments || []).forEach((orn: any) => {
-        const found = ornamentPrices.find(o => o.name === orn.type);
-        p1OrnamentsPrice += (found?.price_from || 0);
+        const found = ornamentPrices.find(o => (o.name || "").trim().toLowerCase() === (orn.type || "").trim().toLowerCase());
+        p1OrnamentsPrice += (found?.price_from || found?.price_from || 0);
       });
 
-      // (Второй человек)
-      const p2ModelPrice = prices.find(p => p.productModel === finalData.p2GarmentModel)?.price_from || 0;
+      const p2ModelPrice = getCleanPrice(finalData.p2GarmentModel);
       let p2OrnamentsPrice = 0;
       (finalData.p2Ornaments || []).forEach((orn: any) => {
-        const found = ornamentPrices.find(o => o.name === orn.type);
-        p2OrnamentsPrice += (found?.price_from || 0);
+        const found = ornamentPrices.find(o => (o.name || "").trim().toLowerCase() === (orn.type || "").trim().toLowerCase());
+        p2OrnamentsPrice += (found?.price_from || found?.price_from || 0);
       });
 
       calculatedTotal = p1ModelPrice + p1OrnamentsPrice + p2ModelPrice + p2OrnamentsPrice;
     } else {
-      // Логика для стандартного одиночного заказа
-      const modelPrice = prices.find(p => p.productModel === finalData.garmentModel)?.price_from || 0;
+      const modelPrice = getCleanPrice(finalData.garmentModel);
       
       let ornamentsPrice = 0;
-      // Если у вас массив строк орнаментов:
-      if (Array.isArray(finalData.ornamentType)) {
-        finalData.ornamentType.forEach((typeStr: string) => {
-          const found = ornamentPrices.find(o => o.name === typeStr);
-          ornamentsPrice += (found?.price_from || 0);
-        });
-      }
-
+      const singleOrnaments = finalData.ornaments || [];
+      singleOrnaments.forEach((orn: any) => {
+        const found = ornamentPrices.find(o => (o.name || "").trim().toLowerCase() === (orn.type || "").trim().toLowerCase());
+        ornamentsPrice += (found?.price_from || found?.price_from || 0);
+      });
+      
       calculatedTotal = modelPrice + ornamentsPrice;
     }
 
-    // Если в форме всё-таки была какая-то своя цена — берём её, иначе — наш точный расчёт
     const finalPrice = finalData.totalPrice || calculatedTotal;
 
-    // Передаем итоговую цену третьим аргументом в маппер
     addOrder(mapFormToOrder(finalData, referencePhoto, finalPrice));
     setIsPaid(true);
   };

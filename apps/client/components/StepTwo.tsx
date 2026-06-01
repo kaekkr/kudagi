@@ -1,11 +1,9 @@
 import { View, Text, Pressable, Image, ActivityIndicator } from "react-native";
-import { Control, Controller, useFormContext, useWatch } from "react-hook-form";
+import { Control, Controller, useWatch } from "react-hook-form";
 import { Camera } from "lucide-react-native";
 import { InputField } from "./ui/InputField";
 import { SectionLabel } from "./ui/SectionLabel";
 import { ChipSelector } from "./ui/ChipSelector";
-import { OrnamentCarousel } from "./ui/OrnamentCarousel";
-import { MultiChipSelector } from "./ui/MultiChipSelector";
 import { GARMENT_MODELS_T, ORNAMENT_POSITIONS_T } from "@/constants/translations";
 import { KU_GOLD } from "@/constants/orderConstants";
 import { PairedOrnamentBlock } from "./PairedOrnamentBlock";
@@ -24,39 +22,6 @@ interface StepTwoProps {
   setValue: any;
 }
 
-/** Ornament block for a single person in paired order */
-const PersonOrnamentSection = ({
-  control,
-  personPrefix,
-  ornamentList,
-  getOrnamentImage,
-  positions,
-  t,
-}: {
-  control: Control<any>;
-  personPrefix: "p1" | "p2";
-  ornamentList: string[];
-  getOrnamentImage: (type: string) => any;
-  positions: string[];
-  t: any;
-}) => (
-  <Controller
-    control={control}
-    name={`${personPrefix}Ornaments` as any}
-    defaultValue={[]}
-    render={({ field: { onChange, value } }) => (
-      <PairedOrnamentBlock
-        value={value ?? []}
-        onChange={onChange}
-        ornamentList={ornamentList}
-        getOrnamentImage={getOrnamentImage}
-        positions={positions}
-        t={t}
-      />
-    )}
-  />
-);
-
 export const StepTwo = ({
   t, control, lang,
   ornamentList, getOrnamentImage,
@@ -67,16 +32,6 @@ export const StepTwo = ({
 
   const orderType = useWatch({ control, name: "orderType", defaultValue: "Стандартный" });
   const isPaired  = orderType === "Парный";
-  const ornamentSelected = useWatch({ control, name: "ornamentType", defaultValue: [] });
-  const ornamentPosition = useWatch({ control, name: "ornamentPosition", defaultValue: [] });
-  const hasOrnament = Array.isArray(ornamentSelected) && ornamentSelected.length > 0;
-
-  useEffect(() => {
-    if (!hasOrnament) {
-      setValue?.("ornamentPosition", []);
-      setValue?.("ornamentPositionCustom", "");
-    }
-  }, [hasOrnament, setValue]);
 
   return (
     <View>
@@ -100,7 +55,6 @@ export const StepTwo = ({
                 borderRadius: 16, padding: 14, marginBottom: 16,
               }}
             >
-              {/* Person header */}
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
                 <View style={{
                   backgroundColor: KU_GOLD, borderRadius: 8,
@@ -115,7 +69,6 @@ export const StepTwo = ({
                 </Text>
               </View>
 
-              {/* Garment model */}
               <Text style={{ fontSize: 12, color: "#6B7280", marginBottom: 6 }}>{t.garmentModel}</Text>
               <ChipSelector
                 control={control}
@@ -124,21 +77,27 @@ export const StepTwo = ({
                 allowCustom
               />
 
-              {/* Ornaments with inline position picker */}
-              <PersonOrnamentSection
-                        control={control}
-                        personPrefix={prefix}
-                        ornamentList={ornamentList}
-                        getOrnamentImage={getOrnamentImage}
-                        positions={currentOrnamentPositions}
-                        t={t}
+              <Controller
+                control={control}
+                name={`${prefix}Ornaments`}
+                defaultValue={[]}
+                render={({ field: { onChange, value } }) => (
+                  <PairedOrnamentBlock
+                    value={value ?? []}
+                    onChange={onChange}
+                    ornamentList={ornamentList}
+                    getOrnamentImage={getOrnamentImage}
+                    positions={currentOrnamentPositions}
+                    t={t}
+                  />
+                )}
               />
             </View>
           ))}
         </View>
       ) : (
         /* ── STANDARD ── */
-        <View>
+        <View style={{ borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 16, padding: 14, marginBottom: 16 }}>
           <SectionLabel>{t.garmentModel}</SectionLabel>
           <ChipSelector
             control={control}
@@ -147,21 +106,20 @@ export const StepTwo = ({
             allowCustom
           />
 
-          <SectionLabel>{t.ornamentType}</SectionLabel>
-          <OrnamentCarousel
+          <Controller
             control={control}
-            name="ornamentType"
-            ornamentList={ornamentList}
-            getOrnamentImage={getOrnamentImage}
-          />
-
-          <SectionLabel>{t.ornamentPosition}</SectionLabel>
-          <MultiChipSelector
-            control={control}
-            name="ornamentPosition"
-            options={currentOrnamentPositions}
-            allowCustom
-            disabled={!hasOrnament}
+            name="ornaments"
+            defaultValue={[]}
+            render={({ field: { onChange, value } }) => (
+              <PairedOrnamentBlock
+                value={value ?? []}
+                onChange={onChange}
+                ornamentList={ornamentList}
+                getOrnamentImage={getOrnamentImage}
+                positions={currentOrnamentPositions}
+                t={t}
+              />
+            )}
           />
         </View>
       )}

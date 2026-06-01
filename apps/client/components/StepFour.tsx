@@ -23,7 +23,6 @@ export const StepFour = ({ t, control }: StepFourProps) => {
     if (ornamentPrices.length === 0) fetchOrnamentPrices();
   }, []);
 
-  // Watch fields that affect price
   const formData = useWatch({ control });
   const breakdown = calculatePrice(formData, prices, ornamentPrices);
   const hasPrice = breakdown.total > 0;
@@ -79,18 +78,6 @@ export const StepFour = ({ t, control }: StepFourProps) => {
         control={control}
         name="paymentMethod"
         options={PAYMENT_METHOD_VALUES}
-      />
-
-      {/* Terms */}
-      <View className="bg-orange-50 p-4 rounded-2xl mt-2 mb-5">
-        <Text className="text-[11px] text-orange-800 leading-5">{t.terms}</Text>
-      </View>
-
-      <Checkbox
-        control={control}
-        name="agreedToTerms"
-        text={t.agreeTerms}
-        rules={{ required: t.errorTerms }}
       />
 
       {/* Data consent */}

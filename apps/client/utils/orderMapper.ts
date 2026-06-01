@@ -40,20 +40,11 @@ function parseStandardMeasurements(data: any): OrderMeasurements {
 
 const OTHER_VALUES = ["Другое", "Басқа"];
 
-/** If the selected value is "Другое"/"Басқа" and a custom text exists, use the custom text */
 function resolveCustom(value: string | undefined, custom: string | undefined): string {
   if (value && OTHER_VALUES.includes(value) && custom?.trim()) return custom.trim();
   return value ?? "";
 }
 
-/** Replace "Другое"/"Басқа" in an array with the custom value if provided */
-function resolveCustomArray(arr: string[], custom: string | undefined): string[] {
-  return arr.map((v) =>
-    OTHER_VALUES.includes(v) && custom?.trim() ? custom.trim() : v
-  );
-}
-
-// ── Added 'totalPrice' as a third argument ───────────────────────────────────
 export const mapFormToOrder = (
   data: any, 
   referencePhoto: string | null, 
@@ -73,6 +64,8 @@ export const mapFormToOrder = (
     measurements: parsePairedMeasurements(data.p2Measurements),
   } : undefined;
 
+  const singleOrnaments = (data.ornaments ?? []) as OrnamentEntry[];
+
   return {
     id:               Date.now().toString(36) + Math.random().toString(36).substring(2, 7),
     orderName:        data.orderName?.trim()        || "",
@@ -86,9 +79,16 @@ export const mapFormToOrder = (
     garmentModel:     isPaired ? "" : resolveCustom(data.garmentModel, data.garmentModelCustom),
     fabricColor:      data.fabricColor?.trim()      || "",
     fabricType:       data.fabricType?.trim()       || "",
-    ornamentType:     isPaired ? [] : (data.ornamentType ?? []),
-    ornamentPosition: isPaired ? [] : resolveCustomArray(data.ornamentPosition ?? [], data.ornamentPositionCustom),
-    garmentOrnaments: [],
+    
+    // Поддержка обратной совместимости с админ панелью:
+    ornamentType:     isPaired ? [] : singleOrnaments.map(o => o.type),
+    ornamentPosition: isPaired ? [] : singleOrnaments.reduce((acc: string[], o) => [...acc, ...(o.positions || [])], []),
+    
+    garmentOrnaments: isPaired ? [] : singleOrnaments.map(o => ({
+      ornamentType: [o.type],
+      ornamentPosition: o.positions
+    })),
+    
     person1,
     person2,
     embroideryColor:  data.embroideryColor?.trim()  || "",
@@ -102,9 +102,7 @@ export const mapFormToOrder = (
       ? parsePairedMeasurements(data.p1Measurements)
       : parseStandardMeasurements(data),
       
-    // ✨ FIX: Use the passed price, fall back to form data, or default to 0
     totalPrice:       totalPrice ?? data.totalPrice ?? 0, 
-    
     depositPaid:      false,
     fullPaid:         false,
     paymentMethod:    data.paymentMethod,

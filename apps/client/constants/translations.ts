@@ -17,7 +17,7 @@ export const PAYMENT_METHOD_VALUES = ["Kaspi Перевод", "Kaspi QR", "Kaspi
 
 export const GARMENT_MODELS_T: Record<Lang, string[]> = {
   kaz: ["Көйлек", "Жилет", "Шапан", "Пальто", "Басқа"],
-  rus: ["Платье", "Жилет", "Чапан", "Пальто", "Другое"],
+  rus: ["Платье", "Жилет", "Шапан", "Пальто", "Другое"],
 };
 
 export const ORNAMENT_POSITIONS_T: Record<Lang, string[]> = {
