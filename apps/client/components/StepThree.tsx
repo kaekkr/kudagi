@@ -224,13 +224,6 @@ export const StepThree = ({ t, control, lang }: StepThreeProps) => {
         )}
       />
 
-      <Checkbox
-        control={control}
-        name="deadlineConfirmed"
-        text={t.confirmDeadline}
-        rules={{ required: t.errorDeadline }}
-      />
-
       {/* Delivery */}
       <SectionLabel>{t.deliveryMethod}</SectionLabel>
       <ChipSelector control={control} name="deliveryMethod" options={DELIVERY_METHODS_T[lang]} />
